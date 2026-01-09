@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Information</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --dark-color: #212529;
+            --light-bg: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            padding: 1.25rem 1.5rem;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .card-header i {
+            font-size: 1.5rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+        
+        .info-item {
+            background: var(--light-bg);
+            padding: 1.25rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .door-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .door-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        
+        .door-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15);
+            transform: translateX(4px);
+        }
+        
+        .door-name {
+            font-weight: 600;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .door-name i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .badge i {
+            font-size: 1rem;
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .door-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1>
+                <i class="bi bi-credit-card-2-front"></i>
+                Card Information
+            </h1>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- Card Details -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i>
+                <span>Card Details</span>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="bi bi-hash"></i>
+                        Card Number
+                    </div>
+                    <div class="info-value">{{ card_data['card-number'] }}</div>
+                </div>
+                
+                <div class="info-item" style="border-left-color: var(--success-color);">
+                    <div class="info-label">
+                        <i class="bi bi-calendar-check"></i>
+                        Start Date
+                    </div>
+                    <div class="info-value">{{ card_data['start-date'] }}</div>
+                </div>
+                
+                <div class="info-item" style="border-left-color: var(--danger-color);">
+                    <div class="info-label">
+                        <i class="bi bi-calendar-x"></i>
+                        End Date
+                    </div>
+                    <div class="info-value">{{ card_data['end-date'] }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Door Permissions -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-door-open"></i>
+                <span>Door Permissions</span>
+            </div>
+            <div class="card-body">
+                {% if card_data['doors'] %}
+                    <ul class="door-list">
+                        {% for door, status in card_data['doors'].items() %}
+                        <li class="door-item">
+                            <div class="door-name">
+                                <i class="bi bi-door-closed"></i>
+                                {{ door }}
+                            </div>
+                            <div>
+                                {% if status == 1 %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i>
+                                        DENY
+                                    </span>
+                                {% elif status == 0 %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i>
+                                        ALLOW
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="bi bi-clock"></i>
+                                        TIME PROFILE {{ status }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-door-closed"></i>
+                        <h5>No Door Permissions</h5>
+                        <p>This card has no door permissions configured</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('doorctl.show_cards', controller_id=controller_id) }}" 
+               class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i>
+                Back to Manage Cards
+            </a>
+            <a href="{{ url_for('doorctl.controller_manage', controller_id=controller_id) }}" 
+               class="btn btn-secondary">
+                <i class="bi bi-house"></i>
+                Back to Controller
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

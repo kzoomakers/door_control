@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  doorcontrol:
+    restart: unless-stopped
+    build: .
+    container_name: doorcontrol
+    ports:
+      - 5002:5001
+    networks:
+      - makers_net
+    volumes:
+      - ./database:/door/  # Use local database directory for testing
+      - ./uhppoted.conf:/etc/uhppoted/uhppoted.conf:ro  # Mount config file for development
+    env_file:
+      - .env
+
+volumes:
+     app-volume:
+
+networks:
+  makers_net:
+    driver: bridge
+

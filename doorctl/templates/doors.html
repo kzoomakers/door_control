@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Door Management</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        /* Page-specific styles for doors.html */
+        .page-header h1 {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .door-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+        }
+        
+        .door-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .door-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-bg);
+        }
+        
+        .door-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .door-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.75rem;
+        }
+        
+        .door-info h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .door-id {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .status-item {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .status-item.open {
+            border-left-color: var(--success-color);
+        }
+        
+        .status-item.closed {
+            border-left-color: var(--danger-color);
+        }
+        
+        .status-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .control-section {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .control-section h5 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .control-section h5 i {
+            color: var(--primary-color);
+        }
+        
+        .btn-group-custom {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 0.625rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .swipe-form {
+            display: flex;
+            gap: 0.75rem;
+            align-items: end;
+        }
+        
+        .swipe-form .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 0.625rem 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert i {
+            font-size: 1.25rem;
+        }
+        
+        .back-button-container {
+            margin-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        
+        .door-state-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .door-state-indicator.open {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+        
+        .door-state-indicator.closed {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 8px var(--danger-color);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .door-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group-custom {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .swipe-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1>
+                <i class="bi bi-door-open"></i>
+                Door Management
+            </h1>
+            <p>Monitor and control door access for your controller</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+               <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                   <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                   {{ message }}
+                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+               </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Door Cards -->
+        {% for door_id, door_state in device_status.status['door-states'].items() %}
+            {% set door_button = device_status.status['door-buttons'][door_id] %}
+            {% set door_details = door_info[door_id] if door_info else {} %}
+            
+            <div class="door-card">
+                <!-- Door Header -->
+                <div class="door-header">
+                    <div class="door-title">
+                        <div class="door-icon">
+                            <i class="bi bi-door-{{ 'open' if door_state else 'closed' }}"></i>
+                        </div>
+                        <div class="door-info">
+                            <h3>Door {{ door_id }}</h3>
+                            <div class="door-id">
+                                <i class="bi bi-hash"></i> Relay {{ door_id }}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        {% if door_state %}
+                            <span class="badge bg-success">
+                                <span class="door-state-indicator open"></span>
+                                <i class="bi bi-unlock"></i> Open
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <span class="door-state-indicator closed"></span>
+                                <i class="bi bi-lock"></i> Closed
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Status Grid -->
+                <div class="status-grid">
+                    <div class="status-item {{ 'open' if door_state else 'closed' }}">
+                        <div class="status-label">
+                            <i class="bi bi-door-{{ 'open' if door_state else 'closed' }}"></i>
+                            Door State
+                        </div>
+                        <div class="status-value">
+                            {{ 'Open' if door_state else 'Closed' }}
+                        </div>
+                    </div>
+                    
+                    <div class="status-item">
+                        <div class="status-label">
+                            <i class="bi bi-toggle-on"></i>
+                            Button State
+                        </div>
+                        <div class="status-value">
+                            {% if door_button %}
+                                <i class="bi bi-hand-index text-warning"></i> Pressed
+                            {% else %}
+                                <i class="bi bi-hand-index text-muted"></i> Not Pressed
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="status-item">
+                        <div class="status-label">
+                            <i class="bi bi-clock"></i>
+                            Door Delay
+                        </div>
+                        <div class="status-value">
+                            {% if 'delay' in door_details %}
+                                {{ door_details['delay'] }} seconds
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="status-item">
+                        <div class="status-label">
+                            <i class="bi bi-gear"></i>
+                            Door Control
+                        </div>
+                        <div class="status-value">
+                            {% if 'control' in door_details %}
+                                {{ door_details['control']|title }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Sections -->
+                <div class="row g-3">
+                    <!-- Door Control Mode -->
+                    <div class="col-md-6">
+                        <div class="control-section">
+                            <h5>
+                                <i class="bi bi-sliders"></i>
+                                Set Door Control Mode
+                            </h5>
+                            <div class="btn-group-custom">
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="setDoorControl('{{ controller_id }}', '{{ door_id }}', 'normally closed')">
+                                    <i class="bi bi-lock-fill"></i> Normally Closed
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" 
+                                        onclick="setDoorControl('{{ controller_id }}', '{{ door_id }}', 'normally open')">
+                                    <i class="bi bi-unlock-fill"></i> Normally Open
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="setDoorControl('{{ controller_id }}', '{{ door_id }}', 'controlled')">
+                                    <i class="bi bi-shield-check"></i> Controlled
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Door Delay -->
+                    <div class="col-md-6">
+                        <div class="control-section">
+                            <h5>
+                                <i class="bi bi-hourglass-split"></i>
+                                Set Door Delay
+                            </h5>
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                    onclick="promptForDelayAndSet('{{ controller_id }}', '{{ door_id }}')">
+                                <i class="bi bi-clock-history"></i> Configure Delay
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Simulate Card Swipe -->
+                    <div class="col-12">
+                        <div class="control-section">
+                            <h5>
+                                <i class="bi bi-credit-card"></i>
+                                Simulate Card Swipe
+                            </h5>
+                            <form class="swipe-form" onsubmit="submitSwipeForm('{{ controller_id }}', '{{ door_id }}'); return false;">
+                                <div class="form-group">
+                                    <label for="cardNumber{{ door_id }}" class="form-label">
+                                        <i class="bi bi-hash"></i>
+                                        Card Number
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="cardNumber{{ door_id }}" 
+                                           name="cardNumber" 
+                                           placeholder="Enter card number"
+                                           required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-credit-card-2-front"></i> Swipe Card
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Back Button -->
+        <div class="back-button-container">
+            <a href="{{ url_for('doorctl.controller_manage', controller_id=controller_id) }}" 
+               class="btn btn-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Back to Controller
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        function submitSwipeForm(controllerId, doorId) {
+            const cardNumber = document.getElementById(`cardNumber${doorId}`).value;
+
+            fetch(`/accesscontrol/controller/${controllerId}/door/${doorId}/swipe`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "card-number": cardNumber
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert("Error: " + data.message, 'danger');
+                } else {
+                    showAlert("Card swipe simulated successfully!", 'success');
+                    setTimeout(() => location.reload(), 1500);
+                }
+            })
+            .catch(error => {
+                showAlert("Error: " + error.message, 'danger');
+            });
+        }
+        
+        function promptForDelayAndSet(deviceId, door) {
+            const delayTime = prompt("Please enter the delay time in seconds:", "5");
+            
+            if (delayTime === null) {
+                return;
+            }
+
+            if (isNaN(delayTime) || delayTime < 0) {
+                showAlert("Please enter a valid number for delay.", 'danger');
+                return;
+            }
+
+            setDoorDelay(deviceId, door, delayTime);
+        }
+        
+        function setDoorDelay(deviceId, door, delayTime) {
+            fetch(`/accesscontrol/controller/${deviceId}/door/${door}/delay`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    delay: delayTime
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert("Error: " + data.error, 'danger');
+                } else {
+                    showAlert("Door delay updated successfully!", 'success');
+                    setTimeout(() => location.reload(), 1500);
+                }
+            })
+            .catch(error => {
+                showAlert("Error: " + error.message, 'danger');
+            });
+        }
+
+        function setDoorControl(deviceId, door, controlState) {
+            fetch(`/accesscontrol/controller/${deviceId}/door/${door}/state`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    control: controlState
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showAlert("Error: " + data.error, 'danger');
+                } else {
+                    showAlert(`Door control set to "${controlState}" successfully!`, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                }
+            })
+            .catch(error => {
+                showAlert("Error: " + error.message, 'danger');
+            });
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
+        }
+        
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

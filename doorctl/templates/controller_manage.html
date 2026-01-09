@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controller Management</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --dark-color: #212529;
+            --light-bg: #f8f9fa;
+            --purple-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .page-header {
+            background: var(--purple-gradient);
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 2.5rem;
+        }
+        
+        .page-header .subtitle {
+            margin-top: 0.5rem;
+            opacity: 0.95;
+            font-size: 1.1rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .card-header {
+            background: white;
+            border-bottom: 2px solid var(--light-bg);
+            font-weight: 600;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .card-header i {
+            margin-right: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            padding: 1.5rem;
+        }
+        
+        .action-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .action-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+            transform: translateY(-4px);
+            text-decoration: none;
+        }
+        
+        .action-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .action-card.primary::before { background: var(--primary-color); }
+        .action-card.success::before { background: var(--success-color); }
+        .action-card.info::before { background: var(--info-color); }
+        .action-card.warning::before { background: var(--warning-color); }
+        
+        .action-card:hover.primary { border-color: var(--primary-color); }
+        .action-card:hover.success { border-color: var(--success-color); }
+        .action-card:hover.info { border-color: var(--info-color); }
+        .action-card:hover.warning { border-color: var(--warning-color); }
+        
+        .action-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        .action-card.primary .action-icon {
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .action-card.success .action-icon {
+            background: rgba(25, 135, 84, 0.1);
+            color: var(--success-color);
+        }
+        
+        .action-card.info .action-icon {
+            background: rgba(13, 202, 240, 0.1);
+            color: var(--info-color);
+        }
+        
+        .action-card.warning .action-icon {
+            background: rgba(255, 193, 7, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .action-card:hover .action-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .action-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+        
+        .action-description {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0;
+        }
+        
+        .event-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead {
+            background: var(--light-bg);
+        }
+        
+        .table thead th {
+            border: none;
+            font-weight: 600;
+            color: var(--dark-color);
+            padding: 1rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: #f0f0f0;
+        }
+        
+        .table tbody tr {
+            transition: background-color 0.2s;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.03);
+        }
+        
+        .badge {
+            padding: 0.5rem 0.875rem;
+            font-weight: 500;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .badge.bg-success {
+            background-color: var(--success-color) !important;
+        }
+        
+        .badge.bg-danger {
+            background-color: var(--danger-color) !important;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .back-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 50px;
+            padding: 0.875rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .section-divider {
+            margin: 2.5rem 0;
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #dee2e6, transparent);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-indicator.granted {
+            background: rgba(25, 135, 84, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-indicator.denied {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .event-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .back-button {
+                bottom: 1rem;
+                right: 1rem;
+                padding: 0.75rem 1.25rem;
+            }
+            
+            .table {
+                font-size: 0.875rem;
+            }
+            
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card {
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        .action-card:nth-child(1) { animation: fadeIn 0.4s ease-out 0.05s both; }
+        .action-card:nth-child(2) { animation: fadeIn 0.4s ease-out 0.1s both; }
+        .action-card:nth-child(3) { animation: fadeIn 0.4s ease-out 0.15s both; }
+        .action-card:nth-child(4) { animation: fadeIn 0.4s ease-out 0.2s both; }
+        .action-card:nth-child(5) { animation: fadeIn 0.4s ease-out 0.25s both; }
+        .action-card:nth-child(6) { animation: fadeIn 0.4s ease-out 0.3s both; }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="bi bi-hdd-rack"></i> Controller {{ controller_id }}</h1>
+            <p class="subtitle mb-0">Manage access control settings and monitor events</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- Quick Actions Section -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge-fill"></i> Quick Actions
+            </div>
+            <div class="action-grid">
+                <a href="{{ url_for('doorctl.show_cards', controller_id=controller_id) }}" class="action-card primary">
+                    <div class="action-icon">
+                        <i class="bi bi-credit-card-2-front"></i>
+                    </div>
+                    <div class="action-title">Manage Cards</div>
+                    <p class="action-description">Add, edit, or remove access cards</p>
+                </a>
+                
+                <a href="{{ url_for('doorctl.manage_doors', controller_id=controller_id) }}" class="action-card success">
+                    <div class="action-icon">
+                        <i class="bi bi-door-open-fill"></i>
+                    </div>
+                    <div class="action-title">Manage Doors</div>
+                    <p class="action-description">Configure door settings and controls</p>
+                </a>
+                
+                <a href="{{ url_for('doorctl.get_time_profiles', controller_id=controller_id) }}" class="action-card info">
+                    <div class="action-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="action-title">Time Profiles</div>
+                    <p class="action-description">Set up access schedules and time rules</p>
+                </a>
+                
+                <a href="{{ url_for('doorctl.display_device_info', controller_id=controller_id) }}" class="action-card primary">
+                    <div class="action-icon">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </div>
+                    <div class="action-title">Device Info</div>
+                    <p class="action-description">View controller details and status</p>
+                </a>
+                
+                <a href="{{ url_for('doorctl.set_device_time', controller_id=controller_id) }}" class="action-card warning">
+                    <div class="action-icon">
+                        <i class="bi bi-clock-fill"></i>
+                    </div>
+                    <div class="action-title">Set Time</div>
+                    <p class="action-description">Synchronize controller time</p>
+                </a>
+                
+                <a href="{{ url_for('doorctl.device_events', controller_id=controller_id) }}" class="action-card info">
+                    <div class="action-icon">
+                        <i class="bi bi-list-ul"></i>
+                    </div>
+                    <div class="action-title">Full Event Log</div>
+                    <p class="action-description">View complete access history</p>
+                </a>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Last Event Section -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-activity"></i> Latest Event
+            </div>
+            <div class="card-body p-0">
+                {% if event %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th><i class="bi bi-hash"></i> Event ID</th>
+                                    <th><i class="bi bi-credit-card"></i> Card #</th>
+                                    <th><i class="bi bi-door-closed"></i> Door</th>
+                                    <th><i class="bi bi-tag"></i> Type</th>
+                                    <th><i class="bi bi-shield-check"></i> Access</th>
+                                    <th><i class="bi bi-arrow-left-right"></i> Direction</th>
+                                    <th><i class="bi bi-clock"></i> Timestamp</th>
+                                    <th><i class="bi bi-info-circle"></i> Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>{{ event['event-id'] }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ event['card-number'] }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">Door {{ event['door-id'] }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="event-type-badge">
+                                            <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                                            {{ event['event-type-text'] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if event['access-granted'] %}
+                                            <span class="status-indicator granted">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                Granted
+                                            </span>
+                                        {% else %}
+                                            <span class="status-indicator denied">
+                                                <i class="bi bi-x-circle-fill"></i>
+                                                Denied
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-arrow-{{ 'right' if event['direction-text'] == 'In' else 'left' }}"></i>
+                                        {{ event['direction-text'] }}
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-calendar3"></i>
+                                        {{ event['timestamp'] }}
+                                    </td>
+                                    <td>{{ event['event-reason-text'] }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h5>No Events Found</h5>
+                        <p>No access events have been recorded yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <a href="{{ url_for('doorctl.accesscontrol') }}" class="btn btn-secondary btn-icon back-button">
+        <i class="bi bi-arrow-left"></i> Controller List
+    </a>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Add smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Add loading state to action cards
+        document.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Don't prevent default, just add visual feedback
+                this.style.opacity = '0.6';
+                this.style.pointerEvents = 'none';
+            });
+        });
+        
+        // Auto-refresh last event every 30 seconds
+        let autoRefreshEnabled = true;
+        
+        function refreshLastEvent() {
+            if (autoRefreshEnabled) {
+                location.reload();
+            }
+        }
+        
+        // Uncomment to enable auto-refresh
+        // setInterval(refreshLastEvent, 30000);
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Press 'B' to go back
+            if (e.key === 'b' || e.key === 'B') {
+                if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+                    window.location.href = "{{ url_for('doorctl.accesscontrol') }}";
+                }
+            }
+        });
+        
+        // Add tooltip for keyboard shortcut
+        const backButton = document.querySelector('.back-button');
+        if (backButton) {
+            backButton.title = 'Back to Controller List (Press B)';
+        }
+    </script>
+</body>
+</html>

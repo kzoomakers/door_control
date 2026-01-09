@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        h1 { 
+            color: white;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin-bottom: 40px;
+        }
+
+        body {
+            width: 100dvw;
+            height: 100dvh;
+            margin: 0px;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(#222, #000);
+        }
+
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .gear {
+            height: 90px;
+            width: 90px;
+            background-color: grey;
+            border-radius: 50%;
+            position: relative;
+            animation: spinner 4000ms infinite linear;
+        }
+
+        .gear::after {
+            content: "";
+            position: absolute;
+            top: 31px;
+            left: 31px;
+            z-index: 10;
+            height: 18px;
+            width: 18px;
+            border-radius: 40%;
+            background-color: black;
+        }
+
+        .tooth {
+            background-color: grey;
+            height: 117px;
+            width: 15px;
+            position: absolute;
+            left: 37.5px;
+            top: -13.5px;
+            border-radius: 18%;
+        }
+
+        .tooth.tooth1 {
+            transform: rotate(30deg);
+        }
+
+        .tooth.tooth2 {
+            transform: rotate(60deg);
+        }
+
+        .tooth.tooth3 {
+            transform: rotate(90deg);
+        }
+
+        .tooth.tooth4 {
+            transform: rotate(120deg);
+        }
+
+        .tooth.tooth5 {
+            transform: rotate(150deg);
+        }
+
+        .tooth.tooth6 {
+            transform: rotate(180deg);
+        }
+
+        .gear:nth-child(2) {
+            margin-top: 80px;
+            margin-left: 8px;
+            animation: spinner-rev 4000ms linear infinite;
+        }
+
+        @keyframes spinner {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spinner-rev {
+            to {
+                transform: rotate(-360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Waiting for Uhppoted</h1>
+        
+        <div class="loader-container">
+            <div class="gear">
+                <div class="tooth tooth1"></div>
+                <div class="tooth tooth2"></div>
+                <div class="tooth tooth3"></div>
+                <div class="tooth tooth4"></div>
+                <div class="tooth tooth5"></div>
+                <div class="tooth tooth6"></div>
+            </div>
+            <div class="gear">
+                <div class="tooth tooth1"></div>
+                <div class="tooth tooth2"></div>
+                <div class="tooth tooth3"></div>
+                <div class="tooth tooth4"></div>
+                <div class="tooth tooth5"></div>
+                <div class="tooth tooth6"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        setTimeout(function(){
+            window.location.href = "{{ url_for('doorctl.controllers_list') }}";
+        }, 3000); // 3000 milliseconds = 3 seconds
+    </script>
+</body>
+</html>

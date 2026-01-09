@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Global Card Metadata</title>
+</head>
+<body>
+    <h1>Edit Global Card Metadata</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ card.name }}">
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ card.email }}">
+        </div>
+        <div class="mb-3">
+            <label for="membership_type" class="form-label">Membership Type</label>
+            <select class="form-select" id="membership_type" name="membership_type">
+                <option value="undefined" {% if card.membership_type == 'partial' %}undefined{% endif %}>Undefined</option>
+                <option value="partial" {% if card.membership_type == 'partial' %}selected{% endif %}>Partial</option>
+                <option value="regular" {% if card.membership_type == 'regular' %}selected{% endif %}>Regular</option>
+                <option value="more" {% if card.membership_type == 'more' %}selected{% endif %}>More</option>
+                <option value="247" {% if card.membership_type == '247' %}selected{% endif %}>247</option>
+                <option value="volunteer" {% if card.membership_type == 'volunteer' %}selected{% endif %}>Volunteer</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</body>
+</html>

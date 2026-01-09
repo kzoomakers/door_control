@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Card Metadata</title>
+</head>
+<body>
+    <h1>Global Card Metadata</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Card Number</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Membership Type</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for card in cards %}
+            <tr>
+                <td>{{ card.card_number }}</td>
+                <td>{{ card.name }}</td>
+                <td>{{ card.email }}</td>
+                <td>{{ card.membership_type }}</td>
+                <td>
+                    <a href="/edit/{{ card.id }}" class="btn btn-primary">Edit Card Details</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

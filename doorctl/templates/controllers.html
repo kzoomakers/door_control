@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Control System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        /* Page-specific styles for controllers.html */
+        .page-header {
+            padding: 3rem 0;
+        }
+        
+        .page-header h1 {
+            font-size: 2.75rem;
+        }
+        
+        .page-header .subtitle {
+            margin-top: 0.75rem;
+            font-size: 1.15rem;
+        }
+        
+        .card {
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            font-size: 1.3rem;
+        }
+        
+        .table thead th {
+            padding: 1rem 1.25rem;
+        }
+        
+        .table tbody td {
+            padding: 1.25rem;
+        }
+        
+        .controller-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--primary-color), #0a58ca);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+        }
+        
+        .controller-link:hover {
+            background: linear-gradient(135deg, #0a58ca, #084298);
+            color: white;
+            transform: translateX(4px);
+            box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+        }
+        
+        .controller-link i {
+            font-size: 1.1rem;
+        }
+        
+        .badge {
+            padding: 0.5rem 0.875rem;
+            font-weight: 500;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        
+        .badge.device-type {
+            background: rgba(13, 202, 240, 0.15);
+            color: var(--info-color);
+            border: 1px solid rgba(13, 202, 240, 0.3);
+        }
+        
+        .badge.timezone {
+            background: rgba(255, 193, 7, 0.15);
+            color: #cc9a06;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        
+        .ip-address {
+            font-family: 'Courier New', monospace;
+            background: rgba(108, 117, 125, 0.1);
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #495057;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .ip-address i {
+            color: var(--info-color);
+        }
+        
+        .controller-name {
+            font-weight: 600;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .controller-name i {
+            color: var(--success-color);
+            font-size: 1.2rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+        
+        .global-actions {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .global-actions h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .global-actions h2 i {
+            color: var(--info-color);
+            font-size: 1.75rem;
+        }
+        
+        .global-actions p {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+        
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, var(--info-color), #0aa2c0);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(13, 202, 240, 0.3);
+            font-size: 1rem;
+        }
+        
+        .action-button:hover {
+            background: linear-gradient(135deg, #0aa2c0, #088ca8);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 202, 240, 0.4);
+        }
+        
+        .action-button i {
+            font-size: 1.3rem;
+        }
+        
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .stat-content {
+            flex: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+        
+        .section-divider {
+            margin: 3rem 0;
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #dee2e6, transparent);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .table {
+                font-size: 0.875rem;
+            }
+            
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+            }
+            
+            .stat-item {
+                min-width: 100%;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .table tbody tr {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+        .table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+        .table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+        .table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+        .table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="bi bi-hdd-rack-fill"></i> Access Control System</h1>
+            <p class="subtitle mb-0">Manage all controllers and access control devices</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- Statistics Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="bi bi-hdd-rack"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Controllers</div>
+                    <div class="stat-value">{{ devices|length }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controllers List -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-ul"></i> Controllers
+            </div>
+            <div class="card-body p-0">
+                {% if devices %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th><i class="bi bi-tag"></i> Name</th>
+                                    <th><i class="bi bi-hash"></i> Device ID</th>
+                                    <th><i class="bi bi-cpu"></i> Device Type</th>
+                                    <th><i class="bi bi-router"></i> IP Address</th>
+                                    <th><i class="bi bi-globe"></i> Timezone</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for device in devices %}
+                                <tr>
+                                    <td>
+                                        <div class="controller-name">
+                                            <i class="bi bi-hdd-fill"></i>
+                                            {{ device['name'] }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('doorctl.controller_manage', controller_id=device['device-id']) }}" 
+                                           class="controller-link">
+                                            <i class="bi bi-box-arrow-in-right"></i>
+                                            {{ device['device-id'] }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge device-type">
+                                            <i class="bi bi-cpu-fill"></i>
+                                            {{ device['device-type'] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="ip-address">
+                                            <i class="bi bi-router-fill"></i>
+                                            {{ device['ipaddr'] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge timezone">
+                                            <i class="bi bi-clock-fill"></i>
+                                            {{ device['timezone'] }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h5>No Controllers Found</h5>
+                        <p>No access control devices are currently configured</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Global Data Section -->
+        <div class="global-actions">
+            <h2>
+                <i class="bi bi-globe2"></i>
+                Global Data
+            </h2>
+            <p>Manage data and settings that apply across all controllers</p>
+            <a href="{{ url_for('doorctl.globalcards') }}" class="action-button">
+                <i class="bi bi-people-fill"></i>
+                Card User Metadata
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Add smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Add loading state to controller links
+        document.querySelectorAll('.controller-link, .action-button').forEach(link => {
+            link.addEventListener('click', function(e) {
+                this.style.opacity = '0.6';
+                this.style.pointerEvents = 'none';
+            });
+        });
+        
+        // Add search functionality
+        let searchTimeout;
+        function addSearchBox() {
+            const table = document.querySelector('.table');
+            if (!table) return;
+            
+            const searchBox = document.createElement('div');
+            searchBox.className = 'p-3 border-bottom';
+            searchBox.innerHTML = `
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" id="controllerSearch" class="form-control border-start-0" 
+                           placeholder="Search controllers by name, ID, or IP address...">
+                </div>
+            `;
+            
+            table.parentElement.insertBefore(searchBox, table);
+            
+            document.getElementById('controllerSearch').addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const rows = document.querySelectorAll('.table tbody tr');
+                    
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(searchTerm) ? '' : 'none';
+                    });
+                }, 300);
+            });
+        }
+        
+        // Initialize search if there are controllers
+        if (document.querySelectorAll('.table tbody tr').length > 0) {
+            addSearchBox();
+        }
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Press '/' to focus search
+            if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault();
+                const searchInput = document.getElementById('controllerSearch');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

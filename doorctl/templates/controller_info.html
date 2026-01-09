@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controller Information</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --dark-color: #212529;
+            --light-bg: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .page-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.95;
+            font-size: 1rem;
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-bg);
+        }
+        
+        .info-card-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .info-card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin: 0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .info-item {
+            background: var(--light-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .info-item.success {
+            border-left-color: var(--success-color);
+        }
+        
+        .info-item.danger {
+            border-left-color: var(--danger-color);
+        }
+        
+        .info-item.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            word-break: break-all;
+        }
+        
+        .door-status-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .door-status-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .door-status-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .status-indicator.online {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+        
+        .status-indicator.offline {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 8px var(--danger-color);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1>
+                <i class="bi bi-info-circle"></i>
+                Controller Information
+            </h1>
+            <p>Detailed status and configuration for controller {{ device_status['device-id'] }}</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <div class="row">
+            <!-- Status Card -->
+            <div class="col-lg-6">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <h2 class="info-card-title">Controller Status</h2>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-hash"></i>
+                                Device ID
+                            </div>
+                            <div class="info-value">{{ device_status['device-id'] }}</div>
+                        </div>
+                        
+                        <div class="info-item success">
+                            <div class="info-label">
+                                <i class="bi bi-clock"></i>
+                                System Time
+                            </div>
+                            <div class="info-value">{{ device_status['status']['system-datetime'] }}</div>
+                        </div>
+                        
+                        <div class="info-item {% if device_status['status']['system-error'] %}danger{% else %}success{% endif %}">
+                            <div class="info-label">
+                                <i class="bi bi-{% if device_status['status']['system-error'] %}exclamation-triangle{% else %}check-circle{% endif %}"></i>
+                                System Error
+                            </div>
+                            <div class="info-value">
+                                {% if device_status['status']['system-error'] %}
+                                    {{ device_status['status']['system-error'] }}
+                                {% else %}
+                                    No Errors
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-input-cursor"></i>
+                                Input State
+                            </div>
+                            <div class="info-value">{{ device_status['status']['input-state'] }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-toggle-on"></i>
+                                Relay State
+                            </div>
+                            <div class="info-value">{{ device_status['status']['relay-state'] }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-list-ol"></i>
+                                Sequence ID
+                            </div>
+                            <div class="info-value">{{ device_status['status']['sequence-id'] }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-star"></i>
+                                Special Info
+                            </div>
+                            <div class="info-value">{{ device_status['status']['special-info'] }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Door States -->
+                    <div style="margin-top: 1.5rem;">
+                        <div class="info-label" style="margin-bottom: 1rem;">
+                            <i class="bi bi-door-open"></i>
+                            Door States
+                        </div>
+                        <ul class="door-status-list">
+                            {% for door_id, state in device_status['status']['door-states'].items() %}
+                            <li class="door-status-item">
+                                <span>
+                                    <i class="bi bi-door-{{ 'open' if state else 'closed' }}"></i>
+                                    Door {{ door_id }}
+                                </span>
+                                {% if state %}
+                                    <span class="badge bg-success">
+                                        <span class="status-indicator online"></span>
+                                        Open
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        <span class="status-indicator offline"></span>
+                                        Closed
+                                    </span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Door Buttons -->
+                    <div style="margin-top: 1.5rem;">
+                        <div class="info-label" style="margin-bottom: 1rem;">
+                            <i class="bi bi-hand-index"></i>
+                            Door Buttons
+                        </div>
+                        <ul class="door-status-list">
+                            {% for door_id, state in device_status['status']['door-buttons'].items() %}
+                            <li class="door-status-item">
+                                <span>
+                                    <i class="bi bi-toggle-on"></i>
+                                    Door {{ door_id }} Button
+                                </span>
+                                {% if state %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-hand-index-thumb"></i>
+                                        Pressed
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-hand-index"></i>
+                                        Not Pressed
+                                    </span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Device Info Card -->
+            <div class="col-lg-6">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="bi bi-hdd-network"></i>
+                        </div>
+                        <h2 class="info-card-title">Device Information</h2>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-cpu"></i>
+                                Device Type
+                            </div>
+                            <div class="info-value">{{ device_info['device']['device-type'] }}</div>
+                        </div>
+                        
+                        <div class="info-item success">
+                            <div class="info-label">
+                                <i class="bi bi-router"></i>
+                                IP Address
+                            </div>
+                            <div class="info-value">{{ device_info['device']['ip-address'] }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-diagram-3"></i>
+                                Subnet Mask
+                            </div>
+                            <div class="info-value">{{ device_info['device']['subnet-mask'] }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-signpost"></i>
+                                Gateway
+                            </div>
+                            <div class="info-value">{{ device_info['device']['gateway-address'] }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-ethernet"></i>
+                                MAC Address
+                            </div>
+                            <div class="info-value">{{ device_info['device']['mac-address'] }}</div>
+                        </div>
+                        
+                        <div class="info-item warning">
+                            <div class="info-label">
+                                <i class="bi bi-code-square"></i>
+                                Firmware Version
+                            </div>
+                            <div class="info-value">{{ device_info['device']['version'] }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="bi bi-calendar-event"></i>
+                                Firmware Date
+                            </div>
+                            <div class="info-value">{{ device_info['device']['date'] }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('doorctl.device_events', controller_id=controller_id) }}" 
+               class="btn btn-primary btn-lg">
+                <i class="bi bi-journal-text"></i> View Event Log
+            </a>
+            <a href="{{ url_for('doorctl.controller_manage', controller_id=controller_id) }}" 
+               class="btn btn-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Back to Controller
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

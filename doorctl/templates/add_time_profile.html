@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Time Profile</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --dark-color: #212529;
+            --light-bg: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .page-header h1 {
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .page-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.95;
+            font-size: 1rem;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--light-bg);
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .form-section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .form-section-title i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-label i {
+            color: var(--primary-color);
+        }
+        
+        .form-label .required {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
+        
+        .input-group {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .input-group-text {
+            background: var(--light-bg);
+            border: 1px solid #dee2e6;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+        
+        .help-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .help-text i {
+            color: var(--info-color);
+        }
+        
+        .weekday-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        
+        .weekday-checkbox {
+            position: relative;
+        }
+        
+        .weekday-checkbox input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .weekday-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.875rem;
+            background: var(--light-bg);
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            gap: 0.5rem;
+        }
+        
+        .weekday-checkbox input[type="checkbox"]:checked + .weekday-label {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+        
+        .weekday-label:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        
+        .time-input-group {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .time-separator {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 0.875rem 2rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn-lg {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert i {
+            font-size: 1.25rem;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        
+        .info-card h5 {
+            color: var(--dark-color);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-card ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: #495057;
+        }
+        
+        .info-card li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .quick-select {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+        
+        .quick-select-btn {
+            padding: 0.5rem 1rem;
+            background: var(--light-bg);
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .quick-select-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .form-container {
+                padding: 1.5rem;
+            }
+            
+            .weekday-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .time-input-group {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .time-separator {
+                display: none;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1>
+                <i class="bi bi-plus-circle"></i>
+                Add Time Profile
+            </h1>
+            <p>Create a new time-based access schedule</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+               <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                   <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                   {{ message }}
+                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+               </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Info Card -->
+        <div class="info-card">
+            <h5>
+                <i class="bi bi-lightbulb-fill text-primary"></i>
+                Time Profile Guidelines
+            </h5>
+            <ul>
+                <li><strong>Profile ID:</strong> Must be between 2-254 (ID 1 is reserved for "Any Time")</li>
+                <li><strong>Date Range:</strong> Defines when this profile is active</li>
+                <li><strong>Weekdays:</strong> Select which days of the week this profile applies</li>
+                <li><strong>Time Segments:</strong> Define the allowed access hours (24-hour format)</li>
+            </ul>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <form method="POST" id="timeProfileForm">
+                <!-- Profile ID Section -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-hash"></i>
+                        Profile Identification
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="time_profile_id" class="form-label">
+                            <i class="bi bi-tag"></i>
+                            Time Profile ID
+                            <span class="required">*</span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="time_profile_id" 
+                               name="time_profile_id" 
+                               min="2" 
+                               max="254" 
+                               required
+                               placeholder="Enter a number between 2 and 254">
+                        <div class="help-text">
+                            <i class="bi bi-info-circle"></i>
+                            Choose a unique ID for this time profile (2-254)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range Section -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-calendar-range"></i>
+                        Date Range
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="start_date" class="form-label">
+                                <i class="bi bi-calendar-check"></i>
+                                Start Date
+                                <span class="required">*</span>
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="start_date" 
+                                   name="start_date" 
+                                   required>
+                            <div class="help-text">
+                                <i class="bi bi-info-circle"></i>
+                                When this profile becomes active
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="end_date" class="form-label">
+                                <i class="bi bi-calendar-x"></i>
+                                End Date
+                                <span class="required">*</span>
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="end_date" 
+                                   name="end_date" 
+                                   required>
+                            <div class="help-text">
+                                <i class="bi bi-info-circle"></i>
+                                When this profile expires
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-select">
+                        <button type="button" class="quick-select-btn" onclick="setDateRange(30)">
+                            <i class="bi bi-calendar"></i> Next 30 Days
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="setDateRange(90)">
+                            <i class="bi bi-calendar"></i> Next 90 Days
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="setDateRange(365)">
+                            <i class="bi bi-calendar"></i> Next Year
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="setDateRange(3650)">
+                            <i class="bi bi-calendar"></i> Next 10 Years
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Weekdays Section -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-calendar-week"></i>
+                        Active Weekdays
+                    </div>
+                    
+                    <label class="form-label">
+                        <i class="bi bi-check-square"></i>
+                        Select Days
+                        <span class="required">*</span>
+                    </label>
+                    
+                    <div class="quick-select">
+                        <button type="button" class="quick-select-btn" onclick="selectWeekdays('all')">
+                            <i class="bi bi-check-all"></i> Select All
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="selectWeekdays('weekdays')">
+                            <i class="bi bi-briefcase"></i> Weekdays Only
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="selectWeekdays('weekend')">
+                            <i class="bi bi-cup-hot"></i> Weekend Only
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="selectWeekdays('none')">
+                            <i class="bi bi-x"></i> Clear All
+                        </button>
+                    </div>
+                    
+                    <div class="weekday-selector">
+                        <div class="weekday-checkbox">
+                            <input type="checkbox" id="monday" value="Monday" checked>
+                            <label for="monday" class="weekday-label">
+                                <i class="bi bi-calendar-day"></i>
+                                Monday
+                            </label>
+                        </div>
+                        <div class="weekday-checkbox">
+                            <input type="checkbox" id="tuesday" value="Tuesday" checked>
+                            <label for="tuesday" class="weekday-label">
+                                <i class="bi bi-calendar-day"></i>
+                                Tuesday
+                            </label>
+                        </div>
+                        <div class="weekday-checkbox">
+                            <input type="checkbox" id="wednesday" value="Wednesday" checked>
+                            <label for="wednesday" class="weekday-label">
+                                <i class="bi bi-calendar-day"></i>
+                                Wednesday
+                            </label>
+                        </div>
+                        <div class="weekday-checkbox">
+                            <input type="checkbox" id="thursday" value="Thursday" checked>
+                            <label for="thursday" class="weekday-label">
+                                <i class="bi bi-calendar-day"></i>
+                                Thursday
+                            </label>
+                        </div>
+                        <div class="weekday-checkbox">
+                            <input type="checkbox" id="friday" value="Friday" checked>
+                            <label for="friday" class="weekday-label">
+                                <i class="bi bi-calendar-day"></i>
+                                Friday
+                            </label>
+                        </div>
+                        <div class="weekday-checkbox">
+                            <input type="checkbox" id="saturday" value="Saturday" checked>
+                            <label for="saturday" class="weekday-label">
+                                <i class="bi bi-calendar-day"></i>
+                                Saturday
+                            </label>
+                        </div>
+                        <div class="weekday-checkbox">
+                            <input type="checkbox" id="sunday" value="Sunday" checked>
+                            <label for="sunday" class="weekday-label">
+                                <i class="bi bi-calendar-day"></i>
+                                Sunday
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="weekdays" name="weekdays" required>
+                    <div class="help-text">
+                        <i class="bi bi-info-circle"></i>
+                        Select the days when this time profile should be active
+                    </div>
+                </div>
+
+                <!-- Time Segments Section -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <i class="bi bi-clock"></i>
+                        Access Time Window
+                    </div>
+                    
+                    <label class="form-label">
+                        <i class="bi bi-hourglass-split"></i>
+                        Time Range
+                        <span class="required">*</span>
+                    </label>
+                    
+                    <div class="quick-select">
+                        <button type="button" class="quick-select-btn" onclick="setTimeRange('00:00', '23:59')">
+                            <i class="bi bi-clock"></i> All Day (24/7)
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="setTimeRange('08:00', '17:00')">
+                            <i class="bi bi-briefcase"></i> Business Hours (8AM-5PM)
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="setTimeRange('09:00', '18:00')">
+                            <i class="bi bi-building"></i> Office Hours (9AM-6PM)
+                        </button>
+                        <button type="button" class="quick-select-btn" onclick="setTimeRange('18:00', '06:00')">
+                            <i class="bi bi-moon"></i> Night Shift (6PM-6AM)
+                        </button>
+                    </div>
+                    
+                    <div class="time-input-group">
+                        <div>
+                            <label for="segment_start" class="form-label">
+                                <i class="bi bi-play-fill"></i>
+                                Start Time
+                            </label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="segment_start" 
+                                   name="segment_start" 
+                                   required
+                                   value="08:00">
+                        </div>
+                        
+                        <div class="time-separator">
+                            <i class="bi bi-arrow-right"></i>
+                        </div>
+                        
+                        <div>
+                            <label for="segment_end" class="form-label">
+                                <i class="bi bi-stop-fill"></i>
+                                End Time
+                            </label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="segment_end" 
+                                   name="segment_end" 
+                                   required
+                                   value="17:00">
+                        </div>
+                    </div>
+                    
+                    <div class="help-text">
+                        <i class="bi bi-info-circle"></i>
+                        Define the time window when access is allowed (24-hour format)
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle"></i>
+                        Create Time Profile
+                    </button>
+                    <a href="{{ url_for('doorctl.get_time_profiles', controller_id=controller_id) }}" 
+                       class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle"></i>
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Update hidden weekdays field when checkboxes change
+        function updateWeekdaysField() {
+            const checkboxes = document.querySelectorAll('.weekday-checkbox input[type="checkbox"]');
+            const selectedDays = [];
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    selectedDays.push(checkbox.value);
+                }
+            });
+            
+            document.getElementById('weekdays').value = selectedDays.join(',');
+        }
+        
+        // Add event listeners to all weekday checkboxes
+        document.querySelectorAll('.weekday-checkbox input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateWeekdaysField);
+        });
+        
+        // Initialize weekdays field
+        updateWeekdaysField();
+        
+        // Quick select weekdays
+        function selectWeekdays(type) {
+            const days = {
+                'monday': document.getElementById('monday'),
+                'tuesday': document.getElementById('tuesday'),
+                'wednesday': document.getElementById('wednesday'),
+                'thursday': document.getElementById('thursday'),
+                'friday': document.getElementById('friday'),
+                'saturday': document.getElementById('saturday'),
+                'sunday': document.getElementById('sunday')
+            };
+            
+            switch(type) {
+                case 'all':
+                    Object.values(days).forEach(day => day.checked = true);
+                    break;
+                case 'weekdays':
+                    days.monday.checked = true;
+                    days.tuesday.checked = true;
+                    days.wednesday.checked = true;
+                    days.thursday.checked = true;
+                    days.friday.checked = true;
+                    days.saturday.checked = false;
+                    days.sunday.checked = false;
+                    break;
+                case 'weekend':
+                    days.monday.checked = false;
+                    days.tuesday.checked = false;
+                    days.wednesday.checked = false;
+                    days.thursday.checked = false;
+                    days.friday.checked = false;
+                    days.saturday.checked = true;
+                    days.sunday.checked = true;
+                    break;
+                case 'none':
+                    Object.values(days).forEach(day => day.checked = false);
+                    break;
+            }
+            
+            updateWeekdaysField();
+        }
+        
+        // Set date range
+        function setDateRange(days) {
+            const today = new Date();
+            const endDate = new Date(today);
+            endDate.setDate(endDate.getDate() + days);
+            
+            document.getElementById('start_date').value = today.toISOString().split('T')[0];
+            document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+        }
+        
+        // Set time range
+        function setTimeRange(start, end) {
+            document.getElementById('segment_start').value = start;
+            document.getElementById('segment_end').value = end;
+        }
+        
+        // Form validation
+        document.getElementById('timeProfileForm').addEventListener('submit', function(e) {
+            const weekdays = document.getElementById('weekdays').value;
+            
+            if (!weekdays) {
+                e.preventDefault();
+                alert('Please select at least one weekday');
+                return false;
+            }
+            
+            const startDate = new Date(document.getElementById('start_date').value);
+            const endDate = new Date(document.getElementById('end_date').value);
+            
+            if (endDate < startDate) {
+                e.preventDefault();
+                alert('End date must be after start date');
+                return false;
+            }
+        });
+        
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Set default date range to next year on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!document.getElementById('start_date').value) {
+                setDateRange(365);
+            }
+        });
+    </script>
+</body>
+</html>
