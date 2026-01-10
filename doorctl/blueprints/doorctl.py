@@ -83,8 +83,9 @@ def globalcards():
     card_data = {card.card_number: (card.name, card.email, card.membership_type) for card in db_allcards}
     current_app.logger.debug(f'card_data={card_data}')
     # Combine REST and database data to display in the table
+    # Use set() to get unique card numbers to prevent duplicates when a card is on multiple controllers
     cards = []
-    for card_number in all_cards_collapsed:
+    for card_number in set(all_cards_collapsed):
         assigned_device_list = assigned_devices.get(card_number, [])
         name, email, membership_type = card_data.get(card_number, ("Undefined", "Undefined", "Undefined"))
         cards.append({
@@ -118,6 +119,35 @@ def globalcards_delete(card_number):
     db.session.query(CardMemberMapping).filter(CardMemberMapping.card_number == card_number).delete()
     db.session.commit()
     return redirect(url_for('doorctl.globalcards'))
+
+
+@doorctl.route('/accesscontrol/global/cards/delete-all-abandoned', methods=['GET', 'POST'])
+def globalcards_delete_all_abandoned():
+    """Delete all abandoned cards (cards not assigned to any controller)"""
+    try:
+        # Get all cards from all controllers
+        api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
+        all_cards_collapsed = []
+        
+        for device_id, deviceproperty in api_config['devices'].items():
+            url = f"{current_app.config['REST_ENDPOINT']}/device/{device_id}/cards"
+            response = requests.get(url, headers=HEADERS)
+            if response.status_code == 200:
+                thecardslist = response.json().get("cards")
+                all_cards_collapsed.extend(thecardslist)
+        
+        # Find and delete orphan cards (cards not in any controller)
+        orphan_cards = CardMemberMapping.query.filter(not_(CardMemberMapping.card_number.in_(all_cards_collapsed)))
+        deleted_count = orphan_cards.count()
+        orphan_cards.delete(synchronize_session=False)
+        db.session.commit()
+        
+        flash(f'Successfully deleted {deleted_count} abandoned card(s)', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting abandoned cards: {str(e)}', 'danger')
+    
+    return redirect(url_for('doorctl.globalcards') + '#abandoned')
 
 
 
@@ -936,7 +966,23 @@ def show_cards(controller_id):
 def get_card(controller_id, card_number):
     url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
     response = requests.get(url)
-    return render_template('get_card.html', controller_id=controller_id, card_data=response.json()['card'])
+    
+    # Fetch user data from database
+    try:
+        card_user = CardMemberMapping.query.filter_by(card_number=card_number).first()
+        user_data = {
+            'name': card_user.name if card_user else 'Undefined',
+            'email': card_user.email if card_user else 'Undefined',
+            'membership_type': card_user.membership_type if card_user else 'Undefined'
+        }
+    except Exception as e:
+        user_data = {
+            'name': 'Undefined',
+            'email': 'Undefined',
+            'membership_type': 'Undefined'
+        }
+    
+    return render_template('get_card.html', controller_id=controller_id, card_data=response.json()['card'], user_data=user_data)
 
 
 @doorctl.route('/accesscontrol/controller/<int:controller_id>/add_card', methods=['POST'])
@@ -1002,16 +1048,35 @@ def delete_card(controller_id):
     card_number = request.form['card_number']
     print(card_number)
     try:
-        # Send a DELETE request to delete the card
+        # Send a DELETE request to delete the card from the controller only
+        # Do NOT delete from database - card metadata should persist across controllers
         url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
         response = requests.delete(url)
         if response.status_code == 200:
-            flash('Card deleted successfully', 'success')
+            flash('Card deleted successfully from controller', 'success')
         else:
-            flash('Failed to delete card', 'danger')
+            flash('Failed to delete card from controller', 'danger')
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
 
+    return redirect(url_for('doorctl.show_cards', controller_id=controller_id))
+
+
+@doorctl.route('/accesscontrol/controller/<int:controller_id>/card/<int:card_number>/delete', methods=['GET', 'POST'])
+def delete_card_user(controller_id, card_number):
+    """Delete a specific card from a controller (does not delete global metadata)"""
+    try:
+        # Send a DELETE request to delete the card from the controller only
+        # Do NOT delete from database - card metadata should persist across controllers
+        url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+        response = requests.delete(url)
+        if response.status_code == 200:
+            flash(f'Card {card_number} deleted successfully from controller', 'success')
+        else:
+            flash(f'Failed to delete card {card_number} from controller', 'danger')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+    
     return redirect(url_for('doorctl.show_cards', controller_id=controller_id))
 
 
