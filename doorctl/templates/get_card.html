@@ -227,7 +227,14 @@
                         <i class="bi bi-person"></i>
                         Name
                     </div>
-                    <div class="info-value">{{ user_data['name'] }}</div>
+                    <div class="info-value">
+                        {{ user_data['name'] }}
+                        {% if user_data.get('note') and user_data['note'] != '' and user_data['note'] != 'None' %}
+                        <div style="font-size: 0.875rem; color: #6c757d; font-weight: 400; margin-top: 0.5rem;">
+                            NOTE: {{ user_data['note'] }}
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 <div class="info-item" style="border-left-color: var(--info-color);">

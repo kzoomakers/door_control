@@ -87,7 +87,12 @@
                                     <i class="bi bi-credit-card text-primary" style="font-size: 1.5rem;"></i>
                                     <div>
                                         <div class="card-number">{{ card }}</div>
-                                        <div class="card-name">{{ card_info['name'] }}</div>
+                                        <div class="card-name">
+                                            {{ card_info['name'] }}
+                                            {% if card_info.get('membership_type') %}
+                                            <span class="badge bg-secondary ms-2" style="font-size: 0.65rem; vertical-align: middle;">{{ card_info['membership_type'] }}</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="card-actions">
@@ -148,7 +153,12 @@
                                                     {{ card }}
                                                     <span class="badge bg-danger ms-2" style="font-size: 0.65rem; vertical-align: middle;">DEACTIVATED</span>
                                                 </div>
-                                                <div class="card-name">{{ card_info['name'] }}</div>
+                                                <div class="card-name">
+                                                    {{ card_info['name'] }}
+                                                    {% if card_info.get('membership_type') %}
+                                                    <span class="badge bg-secondary ms-2" style="font-size: 0.65rem; vertical-align: middle;">{{ card_info['membership_type'] }}</span>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="card-actions">
