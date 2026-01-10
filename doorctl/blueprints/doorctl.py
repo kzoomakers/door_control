@@ -949,17 +949,37 @@ def show_cards(controller_id):
     url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/cards"
     response = requests.get(url)
     data = {}
+    deactivated_data = {}
+    
     if response.status_code == 200:
         for card_number in response.json()['cards']:
             if card_number in card_data:
                 name, email, membership_type = card_data[card_number]
             else:
                 name, email, membership_type = ("Undefined", "Undefined", "Undefined")
-            data[card_number] = {"name": name, "email": email, "membership-type": membership_type}
+            
+            # Check if card is deactivated by fetching its door permissions
+            card_url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+            card_response = requests.get(card_url)
+            is_deactivated = False
+            
+            if card_response.status_code == 200:
+                card_details = card_response.json()['card']
+                doors = card_details.get('doors', {})
+                # Check if all doors are set to 0 (deny) - API uses 0=deny, 1=allow
+                if doors and all(value == 0 for value in doors.values()):
+                    is_deactivated = True
+            
+            card_info = {"name": name, "email": email, "membership-type": membership_type}
+            
+            if is_deactivated:
+                deactivated_data[card_number] = card_info
+            else:
+                data[card_number] = card_info
 
     time_profile_data = get_time_profiles(controller_id)
 
-    return render_template('cards.html', time_profiles_data=time_profile_data, door_states=door_states, card_data=data, controller_id=controller_id)
+    return render_template('cards.html', time_profiles_data=time_profile_data, door_states=door_states, card_data=data, deactivated_data=deactivated_data, controller_id=controller_id)
 
 
 @doorctl.route('/accesscontrol/controller/<int:controller_id>/card/<int:card_number>/show', methods=['GET'])
@@ -1208,13 +1228,13 @@ def deactivate_card(controller_id):
         if response.status_code == 200:
             card_data = response.json()['card']
             
-            # Update the card with all relays set to deny (value 1 means deny, 0 means allow)
-            # Set all door permissions to 1 (deny)
+            # Update the card with all relays set to deny (API uses 0=deny, 1=allow)
+            # Set all door permissions to 0 (deny)
             card_data['doors'] = {
-                '1': 1,  # Relay 1 - Deny
-                '2': 1,  # Relay 2 - Deny
-                '3': 1,  # Relay 3 - Deny
-                '4': 1   # Relay 4 - Deny
+                '1': 0,  # Relay 1 - Deny
+                '2': 0,  # Relay 2 - Deny
+                '3': 0,  # Relay 3 - Deny
+                '4': 0   # Relay 4 - Deny
             }
             
             # Send a PUT request to update the card

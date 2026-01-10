@@ -49,6 +49,12 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="deactivated-tab" data-bs-toggle="tab" data-bs-target="#deactivated"
+                        type="button" role="tab" aria-controls="deactivated" aria-selected="false">
+                    <i class="bi bi-person-x-fill"></i> Deactivated Users
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage"
                         type="button" role="tab" aria-controls="manage" aria-selected="false">
                     <i class="bi bi-gear-fill"></i> Add/Delete Users
@@ -116,6 +122,63 @@
         </div>
             </div>
             <!-- End Users Tab -->
+
+            <!-- Deactivated Users Tab -->
+            <div class="tab-pane fade" id="deactivated" role="tabpanel" aria-labelledby="deactivated-tab">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <i class="bi bi-person-x-fill"></i> Deactivated Cards ({{ deactivated_data|length }})
+                    </div>
+                    <div class="card-body">
+                        {% if deactivated_data %}
+                            <!-- Search Box -->
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" id="deactivatedCardSearch" class="form-control" placeholder="Search by card number or name...">
+                            </div>
+                            
+                            <!-- Deactivated Card List -->
+                            <div id="deactivatedCardList">
+                                {% for card, card_info in deactivated_data.items() %}
+                                    <div class="card-item" data-card="{{ card }}" data-name="{{ card_info['name'] }}">
+                                        <div class="card-info">
+                                            <i class="bi bi-credit-card text-danger" style="font-size: 1.5rem;"></i>
+                                            <div>
+                                                <div class="card-number">
+                                                    {{ card }}
+                                                    <span class="badge bg-danger ms-2" style="font-size: 0.65rem; vertical-align: middle;">DEACTIVATED</span>
+                                                </div>
+                                                <div class="card-name">{{ card_info['name'] }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="card-actions">
+                                            <a href="{{ url_for('doorctl.get_card', controller_id=controller_id, card_number=card) }}"
+                                               class="btn btn-sm btn-outline-primary btn-icon">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                            <a href="{{ url_for('doorctl.edit_card_on_controller', controller_id=controller_id, card_number=card) }}"
+                                               class="btn btn-sm btn-outline-secondary btn-icon">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                            <button onclick="showDeleteModal('{{ card }}', '{{ card_info['name'] }}')"
+                                                    class="btn btn-sm btn-outline-danger btn-icon">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <h5>No Deactivated Cards</h5>
+                                <p>All cards are currently active</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <!-- End Deactivated Users Tab -->
 
             <!-- Add/Delete Users Tab -->
             <div class="tab-pane fade" id="manage" role="tabpanel" aria-labelledby="manage-tab">
@@ -305,10 +368,27 @@
     <script>
         let cardToDelete = null;
 
-        // Search functionality
+        // Search functionality for active cards
         document.getElementById('cardSearch')?.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            const cardItems = document.querySelectorAll('.card-item');
+            const cardItems = document.querySelectorAll('#cardList .card-item');
+            
+            cardItems.forEach(item => {
+                const cardNumber = item.dataset.card.toLowerCase();
+                const cardName = item.dataset.name.toLowerCase();
+                
+                if (cardNumber.includes(searchTerm) || cardName.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+        
+        // Search functionality for deactivated cards
+        document.getElementById('deactivatedCardSearch')?.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const cardItems = document.querySelectorAll('#deactivatedCardList .card-item');
             
             cardItems.forEach(item => {
                 const cardNumber = item.dataset.card.toLowerCase();
