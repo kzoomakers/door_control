@@ -613,14 +613,21 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="membership_type" class="form-label"><i class="bi bi-tag"></i> Membership Badge</label>
-                                        <select class="form-select" id="membership_type" name="membership_type">
-                                            <option value="Undefined">Undefined</option>
-                                            <option value="More Hours">More Hours</option>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="membership_type" class="form-label"><i class="bi bi-award"></i> Membership Badge</label>
+                                        <select class="form-select" id="membership_type" name="membership_type" onchange="toggleOtherField(this)">
+                                            <option value="">Undefined</option>
+                                            <option value="Regular Hours">Regular Hours</option>
+                                            <option value="Volunteer">Volunteer</option>
                                             <option value="Partial Access">Partial Access</option>
+                                            <option value="More Hours">More Hours</option>
+                                            <option value="24/7">24/7</option>
                                             <option value="Other">Other</option>
                                         </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="membership_type_other" class="form-label"><i class="bi bi-pencil"></i> Custom Badge</label>
+                                        <input type="text" class="form-control" id="membership_type_other" name="membership_type_other" placeholder="Enter custom badge" disabled>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="note" class="form-label"><i class="bi bi-sticky"></i> Note</label>
@@ -807,6 +814,18 @@
     
     <!-- Custom JavaScript -->
     <script>
+        // Toggle "Other" text field based on dropdown selection
+        function toggleOtherField(selectElement) {
+            const otherField = document.getElementById('membership_type_other');
+            if (selectElement.value === 'Other') {
+                otherField.disabled = false;
+                otherField.focus();
+            } else {
+                otherField.disabled = true;
+                otherField.value = '';
+            }
+        }
+
         // Search functionality for active cards
         document.getElementById('activeCardSearch')?.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
