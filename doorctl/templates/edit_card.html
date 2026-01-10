@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Card</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .form-section h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .door-permissions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .door-permissions > div {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="bi bi-pencil-square"></i> Edit Card</h1>
+            <p class="mb-0 mt-2">Controller ID: {{ controller_id }} | Card Number: {{ card_data['card-number'] }}</p>
+        </div>
+    </div>
+
+    <div class="container pb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+               <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                   <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                   {{ message }}
+                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+               </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('doorctl.edit_card_on_controller', controller_id=controller_id, card_number=card_data['card-number']) }}">
+            <!-- Global Metadata Section -->
+            <div class="form-section">
+                <h3><i class="bi bi-person-circle"></i> User Information (Global Metadata)</h3>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">
+                            <i class="bi bi-person"></i> Name
+                        </label>
+                        <input type="text" name="name" id="name" class="form-control" 
+                               value="{{ user_data['name'] }}" placeholder="Enter name">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">
+                            <i class="bi bi-envelope"></i> Email
+                        </label>
+                        <input type="email" name="email" id="email" class="form-control" 
+                               value="{{ user_data['email'] }}" placeholder="Enter email">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">
+                            <i class="bi bi-telephone"></i> Phone
+                        </label>
+                        <input type="text" name="phone" id="phone" class="form-control" 
+                               value="{{ user_data['phone'] }}" placeholder="Enter phone">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="membership_type" class="form-label">
+                            <i class="bi bi-award"></i> Membership Type
+                        </label>
+                        <input type="text" name="membership_type" id="membership_type" class="form-control" 
+                               value="{{ user_data['membership_type'] }}" placeholder="Enter membership type">
+                    </div>
+                    
+                    <div class="col-12">
+                        <label for="note" class="form-label">
+                            <i class="bi bi-sticky"></i> Note
+                        </label>
+                        <textarea name="note" id="note" class="form-control" rows="2" 
+                                  placeholder="Enter notes">{{ user_data['note'] }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controller-Specific Card Data Section -->
+            <div class="form-section">
+                <h3><i class="bi bi-credit-card"></i> Card Configuration (Controller-Specific)</h3>
+                
+                <!-- Basic Card Information -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label for="card_number_display" class="form-label">
+                            <i class="bi bi-hash"></i> Card Number
+                        </label>
+                        <input type="text" id="card_number_display" class="form-control" 
+                               value="{{ card_data['card-number'] }}" disabled>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="start_date" class="form-label">
+                            <i class="bi bi-calendar-check"></i> Start Date
+                        </label>
+                        <input type="date" name="start_date" id="start_date" class="form-control" required 
+                               value="{{ card_data['start-date'] }}">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="end_date" class="form-label">
+                            <i class="bi bi-calendar-x"></i> End Date
+                        </label>
+                        <input type="date" name="end_date" id="end_date" class="form-control" required 
+                               value="{{ card_data['end-date'] }}">
+                    </div>
+                </div>
+
+                <!-- PIN -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label for="pin" class="form-label">
+                            <i class="bi bi-key"></i> Keypad PIN (Optional)
+                        </label>
+                        <input type="text" name="pin" id="pin" class="form-control" 
+                               value="{{ card_data['pin'] if card_data['pin'] else '' }}" 
+                               placeholder="Enter PIN">
+                    </div>
+                </div>
+
+                <!-- Door Permissions -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-door-open"></i> Door Permissions
+                    </label>
+                    <div class="door-permissions">
+                        {% for doorid in door_states %}
+                        <div>
+                            <label class="form-label text-muted small">Door Relay {{ doorid }}</label>
+                            <select name="doors" class="form-select">
+                                {% set current_permission = card_data['doors'][doorid|string] %}
+                                <option value="1" {% if current_permission == 0 %}selected{% endif %}>🚫 Deny</option>
+                                <option value="0" {% if current_permission == 1 %}selected{% endif %}>✅ Allow</option>
+                                {% for profile in time_profiles_data.profiles %}
+                                    <option value="{{ profile.id }}" {% if current_permission == profile.id %}selected{% endif %}>
+                                        ⏰ Profile {{ profile.id }} | {{ profile.weekdays }} | {{ profile.segments[0]['start'] }}-{{ profile.segments[0]['end'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                <a href="{{ url_for('doorctl.show_cards', controller_id=controller_id) }}"
+                   class="btn btn-secondary btn-icon">
+                    <i class="bi bi-arrow-left"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary btn-icon">
+                    <i class="bi bi-check-lg"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

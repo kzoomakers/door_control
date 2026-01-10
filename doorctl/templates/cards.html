@@ -89,7 +89,7 @@
                                        class="btn btn-sm btn-outline-primary btn-icon">
                                         <i class="bi bi-eye"></i> View
                                     </a>
-                                    <a href="{{ url_for('doorctl.globalcards_edit', card_id=card) }}"
+                                    <a href="{{ url_for('doorctl.edit_card_on_controller', controller_id=controller_id, card_number=card) }}"
                                        class="btn btn-sm btn-outline-secondary btn-icon">
                                         <i class="bi bi-pencil"></i> Edit
                                     </a>
@@ -119,17 +119,64 @@
 
             <!-- Add/Delete Users Tab -->
             <div class="tab-pane fade" id="manage" role="tabpanel" aria-labelledby="manage-tab">
-                <!-- Add/Update Card Section -->
+                <!-- Add Card Section -->
                 <div class="form-section">
-            <h3><i class="bi bi-plus-circle"></i> Add/Update Card</h3>
+            <h3><i class="bi bi-plus-circle"></i> Add Card</h3>
             <form method="POST" action="{{ url_for('doorctl.add_card', controller_id=controller_id) }}">
-                <!-- Basic Information -->
+                <!-- User Information (Global Metadata) -->
+                <h5 class="mb-3"><i class="bi bi-person-circle"></i> User Information (Global Metadata)</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label for="name" class="form-label">
+                            <i class="bi bi-person"></i> Name
+                        </label>
+                        <input type="text" name="name" id="name" class="form-control"
+                               placeholder="Enter name">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="email" class="form-label">
+                            <i class="bi bi-envelope"></i> Email
+                        </label>
+                        <input type="email" name="email" id="email" class="form-control"
+                               placeholder="Enter email">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="phone" class="form-label">
+                            <i class="bi bi-telephone"></i> Phone
+                        </label>
+                        <input type="text" name="phone" id="phone" class="form-control"
+                               placeholder="Enter phone">
+                    </div>
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="membership_type" class="form-label">
+                            <i class="bi bi-award"></i> Membership Type
+                        </label>
+                        <input type="text" name="membership_type" id="membership_type" class="form-control"
+                               placeholder="Enter membership type">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="note" class="form-label">
+                            <i class="bi bi-sticky"></i> Note
+                        </label>
+                        <input type="text" name="note" id="note" class="form-control"
+                               placeholder="Enter note">
+                    </div>
+                </div>
+
+                <!-- Card Information -->
+                <h5 class="mb-3 mt-4"><i class="bi bi-credit-card"></i> Card Information</h5>
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
                         <label for="card_number" class="form-label">
                             <i class="bi bi-hash"></i> Card Number
                         </label>
-                        <input type="text" name="card_number" id="card_number" class="form-control" required 
+                        <input type="text" name="card_number" id="card_number" class="form-control" required
                                placeholder="Enter card number">
                     </div>
                     
@@ -137,7 +184,7 @@
                         <label for="start_date" class="form-label">
                             <i class="bi bi-calendar-check"></i> Start Date
                         </label>
-                        <input type="date" name="start_date" id="start_date" class="form-control" required 
+                        <input type="date" name="start_date" id="start_date" class="form-control" required
                                value="2000-01-01">
                     </div>
                     
@@ -145,7 +192,7 @@
                         <label for="end_date" class="form-label">
                             <i class="bi bi-calendar-x"></i> End Date
                         </label>
-                        <input type="date" name="end_date" id="end_date" class="form-control" required 
+                        <input type="date" name="end_date" id="end_date" class="form-control" required
                                value="2099-01-01">
                     </div>
                     
@@ -153,7 +200,7 @@
                         <label for="pin" class="form-label">
                             <i class="bi bi-key"></i> Keypad PIN (Optional)
                         </label>
-                        <input type="text" name="pin" id="pin" class="form-control" 
+                        <input type="text" name="pin" id="pin" class="form-control"
                                placeholder="Enter PIN">
                     </div>
                 </div>

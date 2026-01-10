@@ -985,6 +985,104 @@ def get_card(controller_id, card_number):
     return render_template('get_card.html', controller_id=controller_id, card_data=response.json()['card'], user_data=user_data)
 
 
+@doorctl.route('/accesscontrol/controller/<int:controller_id>/card/<int:card_number>/edit', methods=['GET', 'POST'])
+def edit_card_on_controller(controller_id, card_number):
+    if request.method == 'POST':
+        # Update controller-specific card data
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        doors = request.form.getlist('doors')
+        pin = request.form['pin']
+
+        # Create card data for controller
+        card_data = {
+            'card-number': int(card_number),
+            'start-date': start_date,
+            'end-date': end_date,
+            'pin': int(pin) if pin != '' else None
+        }
+        card_data['doors'] = {}
+
+        for i, value in enumerate(doors, start=1):
+            if value == '0':
+                card_data['doors'][str(i)] = 1
+            elif value == '1':
+                card_data['doors'][str(i)] = 0
+            else:
+                card_data['doors'][str(i)] = int(value)
+
+        # Update card on controller
+        url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+        response = requests.put(url, json=card_data)
+        
+        if response.status_code == 200:
+            flash(f'Card {card_number} updated successfully on controller', 'success')
+        else:
+            error_message = response.json().get('message', 'Error updating card')
+            flash(f'Card {card_number} failed to update: {error_message}', 'danger')
+
+        # Update global metadata
+        try:
+            card_user = CardMemberMapping.query.filter_by(card_number=card_number).one_or_none()
+            if card_user is None:
+                card_user = CardMemberMapping(card_number=card_number)
+            
+            card_user.name = request.form['name']
+            card_user.email = request.form['email']
+            card_user.phone = request.form.get('phone', '')
+            card_user.note = request.form.get('note', '')
+            card_user.membership_type = request.form['membership_type']
+            
+            db.session.merge(card_user)
+            db.session.commit()
+            flash('Card metadata updated successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating card metadata: {str(e)}', 'danger')
+
+        return redirect(url_for('doorctl.show_cards', controller_id=controller_id))
+
+    # GET request - fetch card data
+    url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+    response = requests.get(url)
+    
+    if response.status_code != 200:
+        flash(f'Failed to retrieve card {card_number} from controller', 'danger')
+        return redirect(url_for('doorctl.show_cards', controller_id=controller_id))
+    
+    card_data = response.json()['card']
+    
+    # Fetch user data from database
+    try:
+        card_user = CardMemberMapping.query.filter_by(card_number=card_number).first()
+        user_data = {
+            'name': card_user.name if card_user else '',
+            'email': card_user.email if card_user else '',
+            'phone': card_user.phone if card_user else '',
+            'note': card_user.note if card_user else '',
+            'membership_type': card_user.membership_type if card_user else ''
+        }
+    except Exception as e:
+        user_data = {
+            'name': '',
+            'email': '',
+            'phone': '',
+            'note': '',
+            'membership_type': ''
+        }
+    
+    # Get door states and time profiles
+    door_states = get_door_states(controller_id)
+    time_profile_data = get_time_profiles(controller_id)
+    
+    return render_template('edit_card.html',
+                         controller_id=controller_id,
+                         card_data=card_data,
+                         user_data=user_data,
+                         door_states=door_states,
+                         time_profiles_data=time_profile_data)
+
+
 @doorctl.route('/accesscontrol/controller/<int:controller_id>/add_card', methods=['POST'])
 def add_card(controller_id):
     door_states = get_door_states(controller_id)
@@ -1018,7 +1116,26 @@ def add_card(controller_id):
     url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
     response = requests.put(url, json=card_data)
     if response.status_code == 200:
-        flash(f'Card {card_number} added successfully', 'success')
+        flash(f'Card {card_number} added successfully to controller', 'success')
+        
+        # Save global metadata to database
+        try:
+            card_user = CardMemberMapping.query.filter_by(card_number=int(card_number)).one_or_none()
+            if card_user is None:
+                card_user = CardMemberMapping(card_number=int(card_number))
+            
+            card_user.name = request.form.get('name', '')
+            card_user.email = request.form.get('email', '')
+            card_user.phone = request.form.get('phone', '')
+            card_user.note = request.form.get('note', '')
+            card_user.membership_type = request.form.get('membership_type', '')
+            
+            db.session.merge(card_user)
+            db.session.commit()
+            flash('Card metadata saved successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error saving card metadata: {str(e)}', 'warning')
     else:
         error_message = response.json().get('message', 'Error adding card')
         response = response.json()['message']
