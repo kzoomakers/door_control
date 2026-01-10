@@ -456,10 +456,31 @@
         // Start the message cycling
         cycleMessages();
 
-        // Redirect after 3 seconds
-        setTimeout(function(){
-            window.location.href = "{{ url_for('doorctl.controllers_list') }}";
-        }, 3000);
+        // Trigger cache warm-up via AJAX, then redirect when complete
+        fetch("{{ url_for('doorctl.cache_warmup') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Cache warm-up completed:', data);
+            // Update loading text to show completion
+            loadingTextElement.textContent = "Cache ready! Redirecting...";
+            // Redirect to controllers page after brief delay
+            setTimeout(function(){
+                window.location.href = "{{ url_for('doorctl.controllers_list') }}";
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Cache warm-up error:', error);
+            // Still redirect even if warm-up fails (fail-safe)
+            loadingTextElement.textContent = "Redirecting...";
+            setTimeout(function(){
+                window.location.href = "{{ url_for('doorctl.controllers_list') }}";
+            }, 1000);
+        });
     </script>
 </body>
 

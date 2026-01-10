@@ -495,7 +495,7 @@
     </div>
 
     <!-- Back Button -->
-    <a href="{{ url_for('doorctl.accesscontrol') }}" class="btn btn-secondary btn-icon back-button">
+    <a href="{{ url_for('doorctl.controllers_list') }}" class="btn btn-secondary btn-icon back-button">
         <i class="bi bi-arrow-left"></i> Controller List
     </a>
 
@@ -555,7 +555,7 @@
             // Press 'B' to go back
             if (e.key === 'b' || e.key === 'B') {
                 if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-                    window.location.href = "{{ url_for('doorctl.accesscontrol') }}";
+                    window.location.href = "{{ url_for('doorctl.controllers_list') }}";
                 }
             }
         });

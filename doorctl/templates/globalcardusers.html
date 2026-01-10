@@ -470,7 +470,7 @@
                                     </div>
                                     <div class="text-end ms-3">
                                         <div class="action-buttons justify-content-end mb-2">
-                                            <a href="/accesscontrol/global/cards/edit/{{ card.card_number }}"
+                                            <a href="{{ url_for('doorctl.globalcards_edit', card_id=card.card_number) }}"
                                                class="btn btn-sm btn-primary">
                                                 <i class="bi bi-pencil"></i> Edit
                                             </a>
@@ -545,7 +545,7 @@
                                         <td>{{ card.note if card.note else '-' }}</td>
                                         <td>
                                             <div class="action-buttons">
-                                                <a href="/accesscontrol/global/cards/edit/{{ card.card_number }}" 
+                                                <a href="{{ url_for('doorctl.globalcards_edit', card_id=card.card_number) }}"
                                                    class="btn btn-sm btn-primary">
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </a>
@@ -591,7 +591,7 @@
                         </div>
                     </div>
 
-                    <form id="addCardForm" method="POST" action="/accesscontrol/global/cards/add">
+                    <form id="addCardForm" method="POST" action="{{ url_for('doorctl.global_add_card') }}">
                         <!-- User Information (Global Metadata) -->
                         <div class="card mb-4">
                             <div class="card-header">
@@ -801,7 +801,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x"></i> Cancel
                     </button>
-                    <a href="/accesscontrol/global/cards/delete-all-abandoned" class="btn btn-danger">
+                    <a href="{{ url_for('doorctl.globalcards_delete_all_abandoned') }}" class="btn btn-danger">
                         <i class="bi bi-trash"></i> Delete All Unassociated Cards
                     </a>
                 </div>
@@ -943,7 +943,7 @@
                 // Create form and submit
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = '/accesscontrol/global/cards/delete-from-controllers';
+                form.action = '{{ url_for("doorctl.global_delete_card_from_controllers") }}';
                 
                 const cardInput = document.createElement('input');
                 cardInput.type = 'hidden';
@@ -972,7 +972,7 @@
                 
                 document.getElementById('deleteCardNumber').textContent = cardNumber;
                 document.getElementById('deleteCardName').textContent = cardName;
-                document.getElementById('confirmDeleteBtn').href = '/accesscontrol/global/cards/delete/' + cardNumber;
+                document.getElementById('confirmDeleteBtn').href = '{{ url_for("doorctl.globalcards_delete", card_number=0) }}'.replace('/0', '/' + cardNumber);
                 
                 const modal = new bootstrap.Modal(document.getElementById('deleteCardModal'));
                 modal.show();
@@ -1017,7 +1017,7 @@
         // Load controllers for Add Card form
         async function loadControllers() {
             try {
-                const response = await fetch('/accesscontrol/api/controllers');
+                const response = await fetch('{{ url_for("doorctl.api_get_controllers") }}');
                 const data = await response.json();
                 
                 const container = document.getElementById('controllersList');

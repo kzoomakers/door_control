@@ -16,7 +16,7 @@
 </head>
 
 <body>
-	<form action="/accesscontrol/configedit/save" method="post">
+	<form action="{{ url_for('doorctl.config_save') }}" method="post">
 	    <textarea name="content" id="editor">{{ content }}</textarea>
 	    <button type="submit">Save</button>
 	</form>
