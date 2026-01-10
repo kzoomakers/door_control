@@ -291,6 +291,95 @@
             font-weight: 500;
             border: 1px solid #dee2e6;
         }
+
+        /* Card Item Styles */
+        .card-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .card-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--light-bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .card-item h5 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin: 0;
+        }
+
+        .card-item p {
+            margin: 0;
+            color: #6c757d;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 0.75rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
+
+        .controller-checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .controller-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .controller-checkbox:hover {
+            border-color: var(--primary-color);
+            background: rgba(13, 110, 253, 0.05);
+        }
+
+        .controller-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.75rem;
+            cursor: pointer;
+        }
+
+        .controller-checkbox label {
+            cursor: pointer;
+            margin: 0;
+            font-weight: 500;
+        }
         
         @media (max-width: 768px) {
             .page-header h1 {
@@ -308,6 +397,10 @@
             .btn {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .controller-checkbox-group {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -335,10 +428,16 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="abandoned-tab" data-bs-toggle="tab" data-bs-target="#abandoned"
-                        type="button" role="tab" aria-controls="abandoned" aria-selected="false">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Abandoned Cards
+                <button class="nav-link" id="unassociated-tab" data-bs-toggle="tab" data-bs-target="#unassociated"
+                        type="button" role="tab" aria-controls="unassociated" aria-selected="false">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Unassociated Cards
                     <span class="info-badge">{{ orphan_cards|length if orphan_cards else 0 }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="add-card-tab" data-bs-toggle="tab" data-bs-target="#add-card"
+                        type="button" role="tab" aria-controls="add-card" aria-selected="false">
+                    <i class="bi bi-plus-circle-fill"></i> Add Card
                 </button>
             </li>
         </ul>
@@ -352,65 +451,45 @@
                         <!-- Search Box -->
                         <div class="search-box">
                             <i class="bi bi-search"></i>
-                            <input type="text" id="activeCardSearch" class="form-control" 
-                                   placeholder="Search by card number, name, email, or membership type...">
+                            <input type="text" id="activeCardSearch" class="form-control"
+                                   placeholder="Search by card number or name...">
                         </div>
                         
-                        <!-- Active Cards Table -->
-                        <div class="table-responsive">
-                            <table class="table" id="activeCardsTable">
-                                <thead>
-                                    <tr>
-                                        <th><i class="bi bi-credit-card"></i> Card Number</th>
-                                        <th><i class="bi bi-person"></i> Name</th>
-                                        <th><i class="bi bi-envelope"></i> Email</th>
-                                        <th><i class="bi bi-tag"></i> Membership Badge</th>
-                                        <th><i class="bi bi-hdd-network"></i> Assigned Controllers</th>
-                                        <th><i class="bi bi-gear"></i> Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for card in cards %}
-                                    <tr class="card-row" data-search="{{ card.card_number|lower }} {{ card.name|lower }} {{ card.email|lower }} {{ card.membership_type|lower }}">
-                                        <td>
-                                            <div class="card-number-cell">
-                                                <i class="bi bi-credit-card-2-front text-primary"></i>
-                                                {{ card.card_number }}
-                                            </div>
-                                        </td>
-                                        <td><strong>{{ card.name }}</strong></td>
-                                        <td>{{ card.email }}</td>
-                                        <td>
-                                            <span class="badge bg-info text-dark">
-                                                <i class="bi bi-tag-fill"></i>
-                                                {{ card.membership_type }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% if card.assigned_devices %}
-                                                <div class="device-list">
-                                                    {% for device in card.assigned_devices %}
-                                                        <span class="device-badge">
-                                                            <i class="bi bi-hdd"></i> {{ device }}
-                                                        </span>
-                                                    {% endfor %}
-                                                </div>
-                                            {% else %}
-                                                <span class="text-muted">None</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <a href="/accesscontrol/global/cards/edit/{{ card.card_number }}" 
-                                                   class="btn btn-sm btn-primary">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        <!-- Active Cards List -->
+                        <div id="activeCardsList">
+                            {% for card in cards %}
+                            <div class="card-item mb-3 card-row" data-search="{{ card.card_number|lower }} {{ card.name|lower }}">
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon me-3">
+                                        <i class="bi bi-credit-card-2-front"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">{{ card.card_number }}</h5>
+                                        <p class="mb-1"><strong>{{ card.name }}</strong></p>
+                                        <span class="badge bg-secondary">{{ card.membership_type }}</span>
+                                    </div>
+                                    <div class="text-end ms-3">
+                                        <div class="action-buttons justify-content-end mb-2">
+                                            <a href="/accesscontrol/global/cards/edit/{{ card.card_number }}"
+                                               class="btn btn-sm btn-primary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                            <button class="btn btn-sm btn-danger delete-card-btn"
+                                                    data-card-number="{{ card.card_number }}"
+                                                    data-card-name="{{ card.name }}"
+                                                    data-assigned-devices="{{ card.assigned_devices|tojson|escape }}">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                        {% if card.assigned_devices %}
+                                        <div class="text-muted" style="font-size: 0.875rem;">
+                                            <i class="bi bi-hdd"></i> {{ card.assigned_devices|length }} controller(s)
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
                     {% else %}
                         <div class="empty-state">
@@ -423,13 +502,13 @@
             </div>
             <!-- End Active Cards Tab -->
 
-            <!-- Abandoned Cards Tab -->
-            <div class="tab-pane fade" id="abandoned" role="tabpanel" aria-labelledby="abandoned-tab">
+            <!-- Unassociated Cards Tab -->
+            <div class="tab-pane fade" id="unassociated" role="tabpanel" aria-labelledby="unassociated-tab">
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle-fill"></i>
                     <div>
                         <strong>Warning:</strong> Cards with metadata that are no longer assigned to any door controller. 
-                        Deleting abandoned cards will affect controller log entries.
+                        Deleting unassociated cards will affect controller log entries.
                     </div>
                 </div>
                 
@@ -438,13 +517,13 @@
                         <!-- Search Box -->
                         <div class="search-box">
                             <i class="bi bi-search"></i>
-                            <input type="text" id="abandonedCardSearch" class="form-control" 
+                            <input type="text" id="unassociatedCardSearch" class="form-control" 
                                    placeholder="Search by card number, name, or note...">
                         </div>
                         
-                        <!-- Abandoned Cards Table -->
+                        <!-- Unassociated Cards Table -->
                         <div class="table-responsive">
-                            <table class="table" id="abandonedCardsTable">
+                            <table class="table" id="unassociatedCardsTable">
                                 <thead>
                                     <tr>
                                         <th><i class="bi bi-credit-card"></i> Card Number</th>
@@ -470,8 +549,9 @@
                                                    class="btn btn-sm btn-primary">
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </a>
-                                                <button onclick="confirmDelete('{{ card.card_number }}', '{{ card.name }}')"
-                                                        class="btn btn-sm btn-danger">
+                                                <button class="btn btn-sm btn-danger confirm-delete-btn"
+                                                        data-card-number="{{ card.card_number }}"
+                                                        data-card-name="{{ card.name }}">
                                                     <i class="bi bi-trash"></i> Delete
                                                 </button>
                                             </div>
@@ -485,21 +565,125 @@
                         <!-- Delete All Button -->
                         {% if orphan_cards %}
                         <div class="mt-3 text-end">
-                            <button onclick="confirmDeleteAll()" class="btn btn-danger btn-lg">
-                                <i class="bi bi-trash"></i> Delete All Abandoned Cards
+                            <button id="confirmDeleteAllBtn" class="btn btn-danger btn-lg">
+                                <i class="bi bi-trash"></i> Delete All Unassociated Cards
                             </button>
                         </div>
                         {% endif %}
                     {% else %}
                         <div class="empty-state">
                             <i class="bi bi-check-circle"></i>
-                            <h5>No Abandoned Cards</h5>
+                            <h5>No Unassociated Cards</h5>
                             <p>All cards with metadata are currently assigned to controllers</p>
                         </div>
                     {% endif %}
                 </div>
             </div>
-            <!-- End Abandoned Cards Tab -->
+            <!-- End Unassociated Cards Tab -->
+
+            <!-- Add Card Tab -->
+            <div class="tab-pane fade" id="add-card" role="tabpanel" aria-labelledby="add-card-tab">
+                <div class="table-container">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div>
+                            <strong>Add Card to Multiple Controllers:</strong> Fill in the card information and select which controllers to add this card to.
+                        </div>
+                    </div>
+
+                    <form id="addCardForm" method="POST" action="/accesscontrol/global/cards/add">
+                        <!-- User Information (Global Metadata) -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="bi bi-person-circle"></i> User Information (Global Metadata)
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="name" class="form-label"><i class="bi bi-person"></i> Name</label>
+                                        <input type="text" class="form-control" id="name" name="name" placeholder="Enter name" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="email" class="form-label"><i class="bi bi-envelope"></i> Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter email">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="phone" class="form-label"><i class="bi bi-telephone"></i> Phone</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter phone">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="membership_type" class="form-label"><i class="bi bi-tag"></i> Membership Badge</label>
+                                        <select class="form-select" id="membership_type" name="membership_type">
+                                            <option value="Undefined">Undefined</option>
+                                            <option value="More Hours">More Hours</option>
+                                            <option value="Partial Access">Partial Access</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="note" class="form-label"><i class="bi bi-sticky"></i> Note</label>
+                                        <input type="text" class="form-control" id="note" name="note" placeholder="Enter note">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="bi bi-credit-card"></i> Card Information
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <label for="card_number" class="form-label"><i class="bi bi-hash"></i> Card Number</label>
+                                        <input type="number" class="form-control" id="card_number" name="card_number" placeholder="Enter card number" required>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="start_date" class="form-label"><i class="bi bi-calendar3"></i> Start Date</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" value="2000-01-01" required>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="end_date" class="form-label"><i class="bi bi-calendar-x"></i> End Date</label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" value="2099-12-31" required>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="pin" class="form-label"><i class="bi bi-key"></i> Keypad PIN (Optional)</label>
+                                        <input type="number" class="form-control" id="pin" name="pin" placeholder="Enter PIN">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controllers and Door Permissions -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="bi bi-hdd-rack"></i> Select Controllers and Configure Door Permissions
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">Select controllers and configure door permissions for each:</p>
+                                <div id="controllersList">
+                                    <!-- Controllers will be loaded here dynamically -->
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading controllers...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-plus-circle"></i> Add Card to Selected Controllers
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- End Add Card Tab -->
         </div>
         <!-- End Tab Content -->
 
@@ -511,7 +695,50 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete Active Card Modal (with controller selection and confirmation) -->
+    <div class="modal fade" id="deleteActiveCardModal" tabindex="-1" aria-labelledby="deleteActiveCardModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteActiveCardModalLabel">
+                        <i class="bi bi-exclamation-triangle"></i> Delete Card from Controllers
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Card Number:</strong> <span id="deleteActiveCardNumber"></span></p>
+                    <p><strong>Name:</strong> <span id="deleteActiveCardName"></span></p>
+                    
+                    <hr>
+                    
+                    <h6 class="mb-3">Select controllers to delete this card from:</h6>
+                    <div id="deleteControllerCheckboxes" class="mb-3">
+                        <!-- Controller checkboxes will be inserted here -->
+                    </div>
+
+                    <div id="confirmationSection" style="display: none;">
+                        <hr>
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <strong>Warning:</strong> This action cannot be undone!
+                        </div>
+                        <p><strong>Type the card number to confirm deletion:</strong></p>
+                        <input type="text" class="form-control" id="confirmCardNumber" placeholder="Enter card number">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteActiveCardBtn" disabled>
+                        <i class="bi bi-trash"></i> Delete from Selected Controllers
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Unassociated Card Modal -->
     <div class="modal fade" id="deleteCardModal" tabindex="-1" aria-labelledby="deleteCardModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -543,7 +770,7 @@
         </div>
     </div>
 
-    <!-- Delete All Abandoned Cards Confirmation Modal -->
+    <!-- Delete All Unassociated Cards Confirmation Modal -->
     <div class="modal fade" id="deleteAllCardsModal" tabindex="-1" aria-labelledby="deleteAllCardsModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -554,10 +781,10 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Are you sure you want to delete ALL abandoned cards?</strong></p>
+                    <p><strong>Are you sure you want to delete ALL unassociated cards?</strong></p>
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle-fill"></i>
-                        <strong>Warning:</strong> This will permanently delete metadata for <strong>{{ orphan_cards|length if orphan_cards else 0 }}</strong> abandoned card(s).
+                        <strong>Warning:</strong> This will permanently delete metadata for <strong>{{ orphan_cards|length if orphan_cards else 0 }}</strong> unassociated card(s).
                     </div>
                     <p class="text-danger">
                         <strong>This action cannot be undone and will affect controller log entries!</strong>
@@ -567,8 +794,8 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x"></i> Cancel
                     </button>
-                    <a id="confirmDeleteAllBtn" href="/accesscontrol/global/cards/delete-all-abandoned" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Delete All Abandoned Cards
+                    <a href="/accesscontrol/global/cards/delete-all-abandoned" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete All Unassociated Cards
                     </a>
                 </div>
             </div>
@@ -583,22 +810,22 @@
         // Search functionality for active cards
         document.getElementById('activeCardSearch')?.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#activeCardsTable .card-row');
+            const cards = document.querySelectorAll('#activeCardsList .card-row');
             
-            rows.forEach(row => {
-                const searchData = row.dataset.search;
+            cards.forEach(card => {
+                const searchData = card.dataset.search;
                 if (searchData.includes(searchTerm)) {
-                    row.style.display = '';
+                    card.style.display = '';
                 } else {
-                    row.style.display = 'none';
+                    card.style.display = 'none';
                 }
             });
         });
         
-        // Search functionality for abandoned cards
-        document.getElementById('abandonedCardSearch')?.addEventListener('input', function(e) {
+        // Search functionality for unassociated cards
+        document.getElementById('unassociatedCardSearch')?.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#abandonedCardsTable .card-row');
+            const rows = document.querySelectorAll('#unassociatedCardsTable .card-row');
             
             rows.forEach(row => {
                 const searchData = row.dataset.search;
@@ -609,43 +836,230 @@
                 }
             });
         });
+
+        // Delete active card with controller selection
+        let currentCardNumber = '';
+        let selectedControllers = [];
+
+        document.querySelectorAll('.delete-card-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const cardNumber = this.dataset.cardNumber;
+                const cardName = this.dataset.cardName;
+                const assignedDevices = JSON.parse(this.dataset.assignedDevices);
+                
+                currentCardNumber = cardNumber;
+                document.getElementById('deleteActiveCardNumber').textContent = cardNumber;
+                document.getElementById('deleteActiveCardName').textContent = cardName;
+                
+                // Create controller checkboxes
+                const checkboxContainer = document.getElementById('deleteControllerCheckboxes');
+                checkboxContainer.innerHTML = '';
+                
+                if (assignedDevices && assignedDevices.length > 0) {
+                    assignedDevices.forEach(device => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check mb-2';
+                        div.innerHTML = `
+                            <input class="form-check-input controller-delete-checkbox" type="checkbox" value="${device}" id="delete_${device}">
+                            <label class="form-check-label" for="delete_${device}">
+                                ${device}
+                            </label>
+                        `;
+                        checkboxContainer.appendChild(div);
+                    });
+                } else {
+                    checkboxContainer.innerHTML = '<p class="text-muted">No controllers assigned to this card.</p>';
+                }
+                
+                // Reset confirmation section
+                document.getElementById('confirmationSection').style.display = 'none';
+                document.getElementById('confirmCardNumber').value = '';
+                document.getElementById('confirmDeleteActiveCardBtn').disabled = true;
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('deleteActiveCardModal'));
+                modal.show();
+            });
+        });
+
+        // Handle controller checkbox changes
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('controller-delete-checkbox')) {
+                const checkboxes = document.querySelectorAll('.controller-delete-checkbox:checked');
+                selectedControllers = Array.from(checkboxes).map(cb => cb.value);
+                
+                if (selectedControllers.length > 0) {
+                    document.getElementById('confirmationSection').style.display = 'block';
+                } else {
+                    document.getElementById('confirmationSection').style.display = 'none';
+                    document.getElementById('confirmDeleteActiveCardBtn').disabled = true;
+                }
+            }
+        });
+
+        // Handle card number confirmation input
+        document.getElementById('confirmCardNumber')?.addEventListener('input', function(e) {
+            const confirmBtn = document.getElementById('confirmDeleteActiveCardBtn');
+            if (e.target.value === currentCardNumber && selectedControllers.length > 0) {
+                confirmBtn.disabled = false;
+            } else {
+                confirmBtn.disabled = true;
+            }
+        });
+
+        // Handle delete confirmation
+        document.getElementById('confirmDeleteActiveCardBtn')?.addEventListener('click', function() {
+            if (selectedControllers.length > 0 && currentCardNumber) {
+                // Create form and submit
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/accesscontrol/global/cards/delete-from-controllers';
+                
+                const cardInput = document.createElement('input');
+                cardInput.type = 'hidden';
+                cardInput.name = 'card_number';
+                cardInput.value = currentCardNumber;
+                form.appendChild(cardInput);
+                
+                selectedControllers.forEach(controller => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'controllers';
+                    input.value = controller;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
         
-        // Delete confirmation for single card
-        function confirmDelete(cardNumber, cardName) {
-            document.getElementById('deleteCardNumber').textContent = cardNumber;
-            document.getElementById('deleteCardName').textContent = cardName;
-            document.getElementById('confirmDeleteBtn').href = '/accesscontrol/global/cards/delete/' + cardNumber;
-            
-            const modal = new bootstrap.Modal(document.getElementById('deleteCardModal'));
-            modal.show();
-        }
+        // Delete confirmation for unassociated cards
+        document.querySelectorAll('.confirm-delete-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const cardNumber = this.dataset.cardNumber;
+                const cardName = this.dataset.cardName;
+                
+                document.getElementById('deleteCardNumber').textContent = cardNumber;
+                document.getElementById('deleteCardName').textContent = cardName;
+                document.getElementById('confirmDeleteBtn').href = '/accesscontrol/global/cards/delete/' + cardNumber;
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteCardModal'));
+                modal.show();
+            });
+        });
         
-        // Delete all abandoned cards confirmation
-        function confirmDeleteAll() {
+        // Delete all unassociated cards confirmation
+        document.getElementById('confirmDeleteAllBtn')?.addEventListener('click', function() {
             const modal = new bootstrap.Modal(document.getElementById('deleteAllCardsModal'));
             modal.show();
-        }
+        });
         
         // Handle URL hash for direct tab linking
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash;
-            if (hash === '#abandoned') {
-                const abandonedTab = new bootstrap.Tab(document.querySelector('[data-bs-target="#abandoned"]'));
-                abandonedTab.show();
+            if (hash === '#unassociated') {
+                const tab = new bootstrap.Tab(document.querySelector('[data-bs-target="#unassociated"]'));
+                tab.show();
+            } else if (hash === '#add-card') {
+                const tab = new bootstrap.Tab(document.querySelector('[data-bs-target="#add-card"]'));
+                tab.show();
             }
+
+            // Load controllers for Add Card tab
+            loadControllers();
         });
         
         // Update URL hash when tab changes
         document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
             tab.addEventListener('shown.bs.tab', (e) => {
                 const target = e.target.getAttribute('data-bs-target');
-                if (target === '#abandoned') {
-                    window.location.hash = 'abandoned';
+                if (target === '#unassociated') {
+                    window.location.hash = 'unassociated';
+                } else if (target === '#add-card') {
+                    window.location.hash = 'add-card';
                 } else {
                     history.pushState('', document.title, window.location.pathname + window.location.search);
                 }
             });
         });
+
+        // Load controllers for Add Card form
+        async function loadControllers() {
+            try {
+                const response = await fetch('/accesscontrol/api/controllers');
+                const data = await response.json();
+                
+                const container = document.getElementById('controllersList');
+                container.innerHTML = '';
+                
+                if (data.controllers && data.controllers.length > 0) {
+                    data.controllers.forEach(controller => {
+                        const card = document.createElement('div');
+                        card.className = 'card mb-3';
+                        card.style.border = '2px solid #dee2e6';
+                        
+                        // Create door permission selects based on number of doors
+                        let doorSelects = '';
+                        for (let i = 1; i <= controller.num_doors; i++) {
+                            doorSelects += `
+                                <div class="col-md-${controller.num_doors === 1 ? '12' : controller.num_doors === 2 ? '6' : '4'} mb-2">
+                                    <label class="form-label">Door Relay ${i}</label>
+                                    <select class="form-select form-select-sm" name="door_${controller.id}_${i}">
+                                        <option value="0">Deny</option>
+                                        <option value="1" selected>Allow</option>
+                                    </select>
+                                </div>
+                            `;
+                        }
+                        
+                        card.innerHTML = `
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input controller-select-checkbox" type="checkbox"
+                                           value="${controller.id}" id="ctrl_${controller.id}"
+                                           data-num-doors="${controller.num_doors}">
+                                    <label class="form-check-label" for="ctrl_${controller.id}">
+                                        <strong><i class="bi bi-hdd"></i> ${controller.name} (${controller.id})</strong>
+                                        <span class="badge bg-info ms-2">${controller.device_type}</span>
+                                        <span class="badge bg-secondary ms-1">${controller.num_doors} door(s)</span>
+                                    </label>
+                                </div>
+                                <div class="door-permissions-${controller.id}" style="display: none;">
+                                    <hr>
+                                    <h6 class="mb-3">Door Permissions:</h6>
+                                    <div class="row">
+                                        ${doorSelects}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                        
+                        // Add event listener to show/hide door permissions
+                        const checkbox = card.querySelector(`#ctrl_${controller.id}`);
+                        const doorPerms = card.querySelector(`.door-permissions-${controller.id}`);
+                        checkbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                doorPerms.style.display = 'block';
+                                card.style.borderColor = '#0d6efd';
+                                card.style.backgroundColor = 'rgba(13, 110, 253, 0.05)';
+                            } else {
+                                doorPerms.style.display = 'none';
+                                card.style.borderColor = '#dee2e6';
+                                card.style.backgroundColor = '';
+                            }
+                        });
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-muted">No controllers available.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading controllers:', error);
+                document.getElementById('controllersList').innerHTML =
+                    '<p class="text-danger">Error loading controllers. Please refresh the page.</p>';
+            }
+        }
     </script>
 </body>
 </html>

@@ -25,6 +25,59 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            font-size: 1.25rem;
+        }
+        
+        .controller-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .controller-section h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+        }
+        
+        .door-permission-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+        
+        .door-permission-card.allow {
+            border-left: 4px solid #28a745;
+        }
+        
+        .door-permission-card.deny {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .door-permission-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .permission-select {
+            width: 100%;
+        }
+        
+        .permission-select.allow {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        
+        .permission-select.deny {
+            border-color: #dc3545;
+            color: #dc3545;
         }
     </style>
 </head>
@@ -55,7 +108,6 @@
             <!-- Global Metadata Section -->
             <div class="form-section">
                 <h3><i class="bi bi-person-circle"></i> User Information (Global Metadata)</h3>
-                <p class="text-muted mb-4">This is globally stored data, it is independent of any specific controller.</p>
                 
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -116,6 +168,80 @@
                 </div>
             </div>
 
+            <!-- Controller-Specific Card Configuration Sections -->
+            {% for controller in controllers %}
+            <div class="controller-section">
+                <h3><i class="bi bi-credit-card"></i> Card Configuration (Controller-Specific)</h3>
+                <p class="text-muted mb-3">Controller: {{ controller.name }} ({{ controller.id }})</p>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label for="card_number_{{ controller.id }}" class="form-label">
+                            <i class="bi bi-hash"></i> Card Number
+                        </label>
+                        <input type="text" id="card_number_{{ controller.id }}" class="form-control" 
+                               value="{{ controller.card_data.get('card-number', card.card_number) if controller.card_data else card.card_number }}" 
+                               disabled>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="start_date_{{ controller.id }}" class="form-label">
+                            <i class="bi bi-calendar"></i> Start Date
+                        </label>
+                        <input type="date" name="start_date_{{ controller.id }}" id="start_date_{{ controller.id }}" 
+                               class="form-control" 
+                               value="{{ controller.card_data.get('start-date', '2000-01-01') if controller.card_data else '2000-01-01' }}">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="end_date_{{ controller.id }}" class="form-label">
+                            <i class="bi bi-calendar-x"></i> End Date
+                        </label>
+                        <input type="date" name="end_date_{{ controller.id }}" id="end_date_{{ controller.id }}" 
+                               class="form-control" 
+                               value="{{ controller.card_data.get('end-date', '2099-12-31') if controller.card_data else '2099-12-31' }}">
+                    </div>
+                    
+                    <div class="col-md-12">
+                        <label for="pin_{{ controller.id }}" class="form-label">
+                            <i class="bi bi-key"></i> Keypad PIN (Optional)
+                        </label>
+                        <input type="text" name="pin_{{ controller.id }}" id="pin_{{ controller.id }}" 
+                               class="form-control" 
+                               value="{{ controller.card_data.get('pin', '') if controller.card_data and controller.card_data.get('pin') else '' }}" 
+                               placeholder="Enter PIN">
+                    </div>
+                </div>
+                
+                <!-- Door Permissions -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-door-open"></i> Door Permissions
+                    </label>
+                    <div class="row g-3">
+                        {% for door_num in range(1, controller.num_doors + 1) %}
+                        <div class="col-md-3">
+                            <div class="door-permission-card {% if controller.card_data and controller.card_data.get('doors', {}).get(door_num|string, 1) == 0 %}allow{% else %}deny{% endif %}" 
+                                 id="door_card_{{ controller.id }}_{{ door_num }}">
+                                <div class="door-permission-label">Door Relay {{ door_num }}</div>
+                                <select name="door_{{ controller.id }}_{{ door_num }}" 
+                                        class="form-select permission-select {% if controller.card_data and controller.card_data.get('doors', {}).get(door_num|string, 1) == 0 %}allow{% else %}deny{% endif %}"
+                                        onchange="updateDoorCardStyle(this, '{{ controller.id }}', '{{ door_num }}')">
+                                    <option value="1" {% if not controller.card_data or controller.card_data.get('doors', {}).get(door_num|string, 1) == 1 %}selected{% endif %}>
+                                        <i class="bi bi-x-circle"></i> Deny
+                                    </option>
+                                    <option value="0" {% if controller.card_data and controller.card_data.get('doors', {}).get(door_num|string, 1) == 0 %}selected{% endif %}>
+                                        <i class="bi bi-check-circle"></i> Allow
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
             <!-- Action Buttons -->
             <div class="d-grid gap-2 d-md-flex justify-content-md-between">
                 <a href="{{ url_for('doorctl.globalcards') }}"
@@ -143,6 +269,25 @@
             } else {
                 otherField.disabled = true;
                 otherField.value = '';
+            }
+        }
+
+        // Update door card styling based on permission selection
+        function updateDoorCardStyle(selectElement, controllerId, doorNum) {
+            const card = document.getElementById(`door_card_${controllerId}_${doorNum}`);
+            const value = selectElement.value;
+            
+            // Remove existing classes
+            card.classList.remove('allow', 'deny');
+            selectElement.classList.remove('allow', 'deny');
+            
+            // Add appropriate class
+            if (value === '0') {
+                card.classList.add('allow');
+                selectElement.classList.add('allow');
+            } else {
+                card.classList.add('deny');
+                selectElement.classList.add('deny');
             }
         }
 

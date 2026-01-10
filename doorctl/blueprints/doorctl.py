@@ -114,6 +114,185 @@ def globalcards():
     return render_template('globalcardusers.html', cards=cards, orphan_cards=orphan_cards)
 
 
+@doorctl.route('/accesscontrol/api/controllers', methods=['GET'])
+def api_get_controllers():
+    """API endpoint to get list of controllers with device type info"""
+    try:
+        api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
+        controllers = []
+        for device_id, device_info in api_config['devices'].items():
+            # Determine number of doors based on device type
+            device_type = device_info.get('door.type', 'UTO311-L04')  # Default to 4 doors
+            num_doors = 4  # Default
+            if 'L01' in device_type:
+                num_doors = 1
+            elif 'L02' in device_type:
+                num_doors = 2
+            elif 'L03' in device_type:
+                num_doors = 3
+            elif 'L04' in device_type:
+                num_doors = 4
+            
+            controllers.append({
+                'id': device_id,
+                'name': device_info.get('name', f'Controller {device_id}'),
+                'device_type': device_type,
+                'num_doors': num_doors
+            })
+        return jsonify({'controllers': controllers})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@doorctl.route('/accesscontrol/global/cards/add', methods=['POST'])
+def global_add_card():
+    """Add a card to multiple controllers at once"""
+    try:
+        # Get form data
+        card_number = request.form.get('card_number')
+        name = request.form.get('name', '')
+        email = request.form.get('email', '')
+        phone = request.form.get('phone', '')
+        note = request.form.get('note', '')
+        membership_type = request.form.get('membership_type', 'Undefined')
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        pin = request.form.get('pin', '')
+        
+        # Get all selected controllers (checkboxes that are checked)
+        selected_controllers = []
+        for key in request.form.keys():
+            if key.startswith('door_'):
+                # Extract controller ID from door permission field names (format: door_CONTROLLERID_DOORNUMBER)
+                parts = key.split('_')
+                if len(parts) >= 2:
+                    controller_id = parts[1]
+                    if controller_id not in selected_controllers:
+                        selected_controllers.append(controller_id)
+        
+        if not card_number:
+            flash('Card number is required', 'danger')
+            return redirect(url_for('doorctl.globalcards') + '#add-card')
+        
+        if not selected_controllers:
+            flash('Please select at least one controller', 'warning')
+            return redirect(url_for('doorctl.globalcards') + '#add-card')
+        
+        # Save global metadata to database
+        try:
+            card_user = CardMemberMapping.query.filter_by(card_number=int(card_number)).one_or_none()
+            if card_user is None:
+                card_user = CardMemberMapping(card_number=int(card_number))
+            
+            card_user.name = name
+            card_user.email = email
+            card_user.phone = phone
+            card_user.note = note
+            card_user.membership_type = membership_type
+            
+            db.session.merge(card_user)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error saving card metadata: {str(e)}', 'danger')
+            return redirect(url_for('doorctl.globalcards') + '#add-card')
+        
+        # Add card to selected controllers
+        success_count = 0
+        failed_controllers = []
+        
+        for controller_id in selected_controllers:
+            # Prepare card data for this specific controller
+            card_data = {
+                'card-number': int(card_number),
+                'start-date': start_date,
+                'end-date': end_date,
+                'pin': int(pin) if pin != '' else None,
+                'doors': {}
+            }
+            
+            # Get door permissions for this controller
+            door_num = 1
+            while True:
+                door_key = f'door_{controller_id}_{door_num}'
+                if door_key in request.form:
+                    value = request.form.get(door_key)
+                    # Convert: form value '0' = Deny = API value 1, form value '1' = Allow = API value 0
+                    if value == '0':
+                        card_data['doors'][str(door_num)] = 1  # Deny
+                    elif value == '1':
+                        card_data['doors'][str(door_num)] = 0  # Allow
+                    door_num += 1
+                else:
+                    break
+            
+            # Add card to this controller
+            url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+            response = requests.put(url, json=card_data)
+            
+            if response.status_code == 200:
+                success_count += 1
+            else:
+                failed_controllers.append(controller_id)
+        
+        # Show results
+        if success_count > 0:
+            flash(f'Card {card_number} added successfully to {success_count} controller(s)', 'success')
+        if failed_controllers:
+            flash(f'Failed to add card to controller(s): {", ".join(failed_controllers)}', 'danger')
+        
+        return redirect(url_for('doorctl.globalcards'))
+        
+    except Exception as e:
+        flash(f'Error adding card: {str(e)}', 'danger')
+        return redirect(url_for('doorctl.globalcards') + '#add-card')
+
+
+@doorctl.route('/accesscontrol/global/cards/delete-from-controllers', methods=['POST'])
+def global_delete_card_from_controllers():
+    """Delete a card from selected controllers"""
+    try:
+        card_number = request.form.get('card_number')
+        selected_controllers = request.form.getlist('controllers')
+        
+        if not card_number or not selected_controllers:
+            flash('Invalid request', 'danger')
+            return redirect(url_for('doorctl.globalcards'))
+        
+        success_count = 0
+        failed_controllers = []
+        
+        for controller_info in selected_controllers:
+            # Extract controller ID from format "name (id)"
+            if '(' in controller_info:
+                controller_id = controller_info.split('(')[1].rstrip(')')
+            else:
+                controller_id = controller_info
+            
+            try:
+                url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+                response = requests.delete(url)
+                
+                if response.status_code == 200:
+                    success_count += 1
+                else:
+                    failed_controllers.append(controller_id)
+            except Exception as e:
+                failed_controllers.append(controller_id)
+        
+        # Show results
+        if success_count > 0:
+            flash(f'Card {card_number} deleted from {success_count} controller(s)', 'success')
+        if failed_controllers:
+            flash(f'Failed to delete card from controller(s): {", ".join(failed_controllers)}', 'warning')
+        
+        return redirect(url_for('doorctl.globalcards'))
+        
+    except Exception as e:
+        flash(f'Error deleting card: {str(e)}', 'danger')
+        return redirect(url_for('doorctl.globalcards'))
+
+
 @doorctl.route('/accesscontrol/global/cards/delete/<int:card_number>', methods=['GET', 'POST'])
 def globalcards_delete(card_number):
     db.session.query(CardMemberMapping).filter(CardMemberMapping.card_number == card_number).delete()
@@ -160,6 +339,7 @@ def globalcards_edit(card_id):
         card = CardMemberMapping.query.filter_by(card_number=card_id).one()
     except NoResultFound:
         card = CardMemberMapping(card_number=card_id)
+    
     if request.method == 'POST':
         if card is None:
             try:
@@ -169,6 +349,7 @@ def globalcards_edit(card_id):
                 # If not found, create a new card
                 card = CardMemberMapping(card_number=card_id)
 
+        # Update global metadata
         card.name = request.form['name']
         card.email = request.form['email']
         card.phone = request.form['phone']
@@ -184,15 +365,104 @@ def globalcards_edit(card_id):
             # Merge the card into the session to update or insert
             db.session.merge(card)
             db.session.commit()
-
-            return redirect(url_for('doorctl.globalcards'))
-
+            flash('Global card metadata updated successfully', 'success')
         except Exception as e:
             # Handle other exceptions if necessary
             db.session.rollback()
-            flash(f'Error: {str(e)}', 'error')
+            flash(f'Error updating global metadata: {str(e)}', 'danger')
+            return redirect(url_for('doorctl.globalcards_edit', card_id=card_id))
+        
+        # Update controller-specific card data
+        api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
+        success_count = 0
+        failed_controllers = []
+        
+        for controller_id, controller_info in api_config['devices'].items():
+            # Check if this controller has form data
+            start_date_key = f'start_date_{controller_id}'
+            if start_date_key in request.form:
+                # Prepare card data for this controller
+                card_data = {
+                    'card-number': int(card_id),
+                    'start-date': request.form.get(start_date_key),
+                    'end-date': request.form.get(f'end_date_{controller_id}'),
+                    'pin': int(request.form.get(f'pin_{controller_id}')) if request.form.get(f'pin_{controller_id}', '').strip() else None,
+                    'doors': {}
+                }
+                
+                # Get door permissions for this controller
+                # Determine number of doors based on device type
+                device_type = controller_info.get('door.type', 'UTO311-L04')
+                num_doors = 4  # Default
+                if 'L01' in device_type:
+                    num_doors = 1
+                elif 'L02' in device_type:
+                    num_doors = 2
+                elif 'L03' in device_type:
+                    num_doors = 3
+                elif 'L04' in device_type:
+                    num_doors = 4
+                
+                for door_num in range(1, num_doors + 1):
+                    door_key = f'door_{controller_id}_{door_num}'
+                    if door_key in request.form:
+                        value = request.form.get(door_key)
+                        # Form value: '0' = Allow (API value 0), '1' = Deny (API value 1)
+                        card_data['doors'][str(door_num)] = int(value)
+                
+                # Update card on this controller
+                url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_id}"
+                response = requests.put(url, json=card_data)
+                
+                if response.status_code == 200:
+                    success_count += 1
+                else:
+                    failed_controllers.append(f"{controller_info.get('name', controller_id)} ({controller_id})")
+        
+        # Show results
+        if success_count > 0:
+            flash(f'Card updated successfully on {success_count} controller(s)', 'success')
+        if failed_controllers:
+            flash(f'Failed to update card on controller(s): {", ".join(failed_controllers)}', 'warning')
 
-    return render_template('globaleditcardusers.html', card=card)
+        return redirect(url_for('doorctl.globalcards_edit', card_id=card_id))
+
+    # GET request - fetch controller data and card data from each controller
+    api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
+    controllers = []
+    
+    for controller_id, controller_info in api_config['devices'].items():
+        # Determine number of doors based on device type
+        device_type = controller_info.get('door.type', 'UTO311-L04')
+        num_doors = 4  # Default
+        if 'L01' in device_type:
+            num_doors = 1
+        elif 'L02' in device_type:
+            num_doors = 2
+        elif 'L03' in device_type:
+            num_doors = 3
+        elif 'L04' in device_type:
+            num_doors = 4
+        
+        # Try to fetch existing card data from this controller
+        card_data = None
+        try:
+            url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_id}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                card_data = response.json().get('card', {})
+        except Exception as e:
+            current_app.logger.warning(f'Failed to fetch card {card_id} from controller {controller_id}: {str(e)}')
+        
+        controllers.append({
+            'id': controller_id,
+            'name': controller_info.get('name', f'Controller {controller_id}'),
+            'device_type': device_type,
+            'num_doors': num_doors,
+            'card_data': card_data
+        })
+    
+    return render_template('globaleditcardusers.html', card=card, controllers=controllers)
 
 
 # @doorctl.route('/accesscontrol/global/cards/edit/<int:card_id>', methods=['GET', 'POST'])

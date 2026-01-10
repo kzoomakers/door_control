@@ -440,13 +440,17 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{{ url_for('doorctl.device_events', controller_id=controller_id) }}" 
+            <a href="{{ url_for('doorctl.device_events', controller_id=controller_id) }}"
                class="btn btn-primary btn-lg">
                 <i class="bi bi-journal-text"></i> View Event Log
             </a>
-            <a href="{{ url_for('doorctl.controller_manage', controller_id=controller_id) }}" 
+            <a href="{{ url_for('doorctl.controller_manage', controller_id=controller_id) }}"
                class="btn btn-secondary btn-lg">
                 <i class="bi bi-arrow-left"></i> Back to Controller
+            </a>
+            <a href="{{ url_for('doorctl.data_export_import') }}"
+               class="btn btn-info btn-lg">
+                <i class="bi bi-arrow-down-up"></i> Data Export/Import
             </a>
         </div>
     </div>
