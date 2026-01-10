@@ -145,7 +145,7 @@
     <div class="particle-loader-wrapper">
         <canvas id="particle-canvas"></canvas>
         <div id="center-svg-container"></div>
-        <div id="loading-text">Connecting to controllers...</div>
+        <div id="loading-text">Pinging controller(s) for response…</div>
     </div>
 
     <!-- Load Three.js from CDN (Matching original project version) -->
@@ -419,6 +419,42 @@
         }
 
         init();
+
+        // Connection messages cycling
+        const connectionMessages = [
+            "Pinging controller(s) for response…",
+            "Waiting for controller(s) acknowledgment…",
+            "Reading controller(s) configuration…",
+            "Opening control channel…",
+            "Requesting system descriptors…",
+            "Validating controller response integrity…",
+            "Controller response pending…",
+            "Awaiting device availability…",
+            "Continuing controller discovery…",
+            "Connecting to access controller…"
+        ];
+        
+        let messageIndex = 0;
+        const loadingTextElement = document.getElementById('loading-text');
+        
+        function cycleMessages() {
+            loadingTextElement.textContent = connectionMessages[messageIndex];
+            messageIndex++;
+            
+            if (messageIndex < connectionMessages.length) {
+                // Continue cycling every 0.5 seconds
+                setTimeout(cycleMessages, 500);
+            } else {
+                // On last message, wait 5 seconds then restart
+                setTimeout(function() {
+                    messageIndex = 0;
+                    cycleMessages();
+                }, 5000);
+            }
+        }
+        
+        // Start the message cycling
+        cycleMessages();
 
         // Redirect after 3 seconds
         setTimeout(function(){
