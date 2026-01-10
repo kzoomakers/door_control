@@ -970,7 +970,7 @@ def show_cards(controller_id):
                 if doors and all(value == 0 for value in doors.values()):
                     is_deactivated = True
             
-            card_info = {"name": name, "email": email, "membership-type": membership_type}
+            card_info = {"name": name, "email": email, "membership_type": membership_type}
             
             if is_deactivated:
                 deactivated_data[card_number] = card_info
@@ -993,13 +993,15 @@ def get_card(controller_id, card_number):
         user_data = {
             'name': card_user.name if card_user else 'Undefined',
             'email': card_user.email if card_user else 'Undefined',
-            'membership_type': card_user.membership_type if card_user else 'Undefined'
+            'membership_type': card_user.membership_type if card_user else 'Undefined',
+            'note': card_user.note if card_user else None
         }
     except Exception as e:
         user_data = {
             'name': 'Undefined',
             'email': 'Undefined',
-            'membership_type': 'Undefined'
+            'membership_type': 'Undefined',
+            'note': None
         }
     
     return render_template('get_card.html', controller_id=controller_id, card_data=response.json()['card'], user_data=user_data)
