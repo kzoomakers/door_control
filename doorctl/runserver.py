@@ -20,7 +20,7 @@ os.environ['TZ'] = os.environ.get('TIMEZONE')
 time.tzset()
 
 
-app = Flask(__name__)#,  template_folder='templates')
+app = Flask(__name__, static_url_path='/accesscontrol/static')
 
 app.logger.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler()
