@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Time Profile</title>
+    <title>Edit Time Profile</title>
     <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <!-- Bootstrap Icons -->
@@ -110,6 +110,11 @@
         .form-control:focus, .form-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
+        
+        .form-control:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
         }
         
         .input-group {
@@ -235,8 +240,8 @@
         }
         
         .info-card {
-            background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
-            border-left: 4px solid var(--primary-color);
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
+            border-left: 4px solid var(--warning-color);
             border-radius: 8px;
             padding: 1.25rem;
             margin-bottom: 2rem;
@@ -323,10 +328,10 @@
     <div class="page-header">
         <div class="container">
             <h1>
-                <i class="bi bi-plus-circle"></i>
-                Add Time Profile
+                <i class="bi bi-pencil-square"></i>
+                Edit Time Profile #{{ profile_id }}
             </h1>
-            <p>Create a new time-based access schedule</p>
+            <p>Modify the time-based access schedule</p>
         </div>
     </div>
 
@@ -347,21 +352,21 @@
         <!-- Info Card -->
         <div class="info-card">
             <h5>
-                <i class="bi bi-lightbulb-fill text-primary"></i>
-                Time Profile Guidelines
+                <i class="bi bi-pencil-fill text-warning"></i>
+                Editing Time Profile
             </h5>
             <ul>
-                <li><strong>Profile ID:</strong> Must be between 2-254 (ID 1 is reserved for "Any Time")</li>
-                <li><strong>Date Range:</strong> Defines when this profile is active</li>
-                <li><strong>Weekdays:</strong> Select which days of the week this profile applies</li>
-                <li><strong>Time Segments:</strong> Define the allowed access hours (24-hour format)</li>
+                <li><strong>Profile ID:</strong> Cannot be changed (currently {{ profile_id }})</li>
+                <li><strong>Date Range:</strong> Update when this profile is active</li>
+                <li><strong>Weekdays:</strong> Modify which days of the week this profile applies</li>
+                <li><strong>Time Segments:</strong> Adjust the allowed access hours (24-hour format)</li>
             </ul>
         </div>
 
         <!-- Form Container -->
         <div class="form-container">
             <form method="POST" id="timeProfileForm">
-                <!-- Profile ID Section -->
+                <!-- Profile ID Section (Read-only) -->
                 <div class="form-section">
                     <div class="form-section-title">
                         <i class="bi bi-hash"></i>
@@ -372,20 +377,17 @@
                         <label for="time_profile_id" class="form-label">
                             <i class="bi bi-tag"></i>
                             Time Profile ID
-                            <span class="required">*</span>
                         </label>
-                        <input type="number"
-                               class="form-control"
-                               id="time_profile_id"
-                               name="time_profile_id"
-                               min="2"
-                               max="254"
-                               value="{{ next_profile_id }}"
-                               readonly
-                               required>
+                        <input type="number" 
+                               class="form-control" 
+                               id="time_profile_id" 
+                               name="time_profile_id" 
+                               value="{{ profile_id }}"
+                               disabled
+                               readonly>
                         <div class="help-text">
-                            <i class="bi bi-info-circle"></i>
-                            Next available time profile ID (automatically assigned)
+                            <i class="bi bi-lock"></i>
+                            Profile ID cannot be changed
                         </div>
                     </div>
                 </div>
@@ -408,6 +410,7 @@
                                    class="form-control" 
                                    id="start_date" 
                                    name="start_date" 
+                                   value="{{ profile['start-date'] }}"
                                    required>
                             <div class="help-text">
                                 <i class="bi bi-info-circle"></i>
@@ -425,6 +428,7 @@
                                    class="form-control" 
                                    id="end_date" 
                                    name="end_date" 
+                                   value="{{ profile['end-date'] }}"
                                    required>
                             <div class="help-text">
                                 <i class="bi bi-info-circle"></i>
@@ -477,51 +481,52 @@
                         </button>
                     </div>
                     
+                    {% set selected_days = profile.weekdays.split(',') if profile.weekdays else [] %}
                     <div class="weekday-selector">
                         <div class="weekday-checkbox">
-                            <input type="checkbox" id="monday" value="Monday" checked>
+                            <input type="checkbox" id="monday" value="Monday" {% if 'Monday' in selected_days %}checked{% endif %}>
                             <label for="monday" class="weekday-label">
                                 <i class="bi bi-calendar-day"></i>
                                 Monday
                             </label>
                         </div>
                         <div class="weekday-checkbox">
-                            <input type="checkbox" id="tuesday" value="Tuesday" checked>
+                            <input type="checkbox" id="tuesday" value="Tuesday" {% if 'Tuesday' in selected_days %}checked{% endif %}>
                             <label for="tuesday" class="weekday-label">
                                 <i class="bi bi-calendar-day"></i>
                                 Tuesday
                             </label>
                         </div>
                         <div class="weekday-checkbox">
-                            <input type="checkbox" id="wednesday" value="Wednesday" checked>
+                            <input type="checkbox" id="wednesday" value="Wednesday" {% if 'Wednesday' in selected_days %}checked{% endif %}>
                             <label for="wednesday" class="weekday-label">
                                 <i class="bi bi-calendar-day"></i>
                                 Wednesday
                             </label>
                         </div>
                         <div class="weekday-checkbox">
-                            <input type="checkbox" id="thursday" value="Thursday" checked>
+                            <input type="checkbox" id="thursday" value="Thursday" {% if 'Thursday' in selected_days %}checked{% endif %}>
                             <label for="thursday" class="weekday-label">
                                 <i class="bi bi-calendar-day"></i>
                                 Thursday
                             </label>
                         </div>
                         <div class="weekday-checkbox">
-                            <input type="checkbox" id="friday" value="Friday" checked>
+                            <input type="checkbox" id="friday" value="Friday" {% if 'Friday' in selected_days %}checked{% endif %}>
                             <label for="friday" class="weekday-label">
                                 <i class="bi bi-calendar-day"></i>
                                 Friday
                             </label>
                         </div>
                         <div class="weekday-checkbox">
-                            <input type="checkbox" id="saturday" value="Saturday" checked>
+                            <input type="checkbox" id="saturday" value="Saturday" {% if 'Saturday' in selected_days %}checked{% endif %}>
                             <label for="saturday" class="weekday-label">
                                 <i class="bi bi-calendar-day"></i>
                                 Saturday
                             </label>
                         </div>
                         <div class="weekday-checkbox">
-                            <input type="checkbox" id="sunday" value="Sunday" checked>
+                            <input type="checkbox" id="sunday" value="Sunday" {% if 'Sunday' in selected_days %}checked{% endif %}>
                             <label for="sunday" class="weekday-label">
                                 <i class="bi bi-calendar-day"></i>
                                 Sunday
@@ -574,8 +579,8 @@
                                    class="form-control" 
                                    id="segment_start" 
                                    name="segment_start" 
-                                   required
-                                   value="08:00">
+                                   value="{{ profile.segments[0]['start'] if profile.segments else '08:00' }}"
+                                   required>
                         </div>
                         
                         <div class="time-separator">
@@ -591,8 +596,8 @@
                                    class="form-control" 
                                    id="segment_end" 
                                    name="segment_end" 
-                                   required
-                                   value="17:00">
+                                   value="{{ profile.segments[0]['end'] if profile.segments else '17:00' }}"
+                                   required>
                         </div>
                     </div>
                     
@@ -617,7 +622,7 @@
                     
                     <div class="help-text" style="margin-bottom: 1rem;">
                         <i class="bi bi-info-circle"></i>
-                        Select which controllers should receive this time profile
+                        Select which controllers should receive this updated time profile
                     </div>
                     
                     <div class="weekday-selector">
@@ -648,7 +653,7 @@
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <button type="submit" class="btn btn-primary btn-lg">
+                    <button type="submit" class="btn btn-warning btn-lg">
                         <i class="bi bi-check-circle"></i>
                         Apply to Selected Controllers
                     </button>
@@ -775,13 +780,6 @@
                 bsAlert.close();
             });
         }, 5000);
-        
-        // Set default date range to next year on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            if (!document.getElementById('start_date').value) {
-                setDateRange(365);
-            }
-        });
         
         // Controller selection functions
         function selectAllControllers() {

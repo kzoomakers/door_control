@@ -582,6 +582,52 @@ def device_events(controller_id):
 ##### time profiles #####
 @doorctl.route("/accesscontrol/controller//<int:controller_id>/add_time_profile", methods=["GET", "POST"])
 def add_time_profile(controller_id):
+    if request.method == "GET":
+        # Get all controllers from config
+        api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
+        controllers = []
+        for ctrl_id, ctrl_info in api_config['devices'].items():
+            controllers.append({
+                'id': ctrl_id,
+                'name': ctrl_info.get('name', f'Controller {ctrl_id}')
+            })
+        
+        # Get existing time profiles to find the next available ID
+        url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/time-profiles"
+        response = requests.get(url)
+        
+        next_profile_id = 2  # Start from 2 (1 is reserved)
+        if response.status_code == 200:
+            time_profiles_data = response.json()
+            existing_ids = set()
+            
+            # Collect all existing profile IDs that are actually in use
+            # (not expired or with empty time segments)
+            for profile in time_profiles_data.get('profiles', []):
+                # Check if profile is actually in use (not a "deleted" one)
+                if profile.get('weekdays') and profile.get('weekdays') != '':
+                    # Check if it's not expired
+                    end_date_str = profile.get('end-date', '')
+                    if end_date_str:
+                        try:
+                            end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                            if end_date >= datetime.date.today():
+                                existing_ids.add(profile['id'])
+                        except:
+                            existing_ids.add(profile['id'])
+            
+            # Find the next available ID
+            for i in range(2, 255):  # Profile IDs are 2-254
+                if i not in existing_ids:
+                    next_profile_id = i
+                    break
+            else:
+                # All IDs are taken
+                flash("Maximum number of time profiles reached (254). Please delete an existing profile first.", "danger")
+                return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
+        
+        return render_template("add_time_profile.html", controller_id=controller_id, next_profile_id=next_profile_id, controllers=controllers)
+    
     if request.method == "POST":
         day_mapping = {
             "Mon": "Monday",
@@ -595,9 +641,6 @@ def add_time_profile(controller_id):
             "Sat": "Saturday",
             "Sun": "Sunday"
         }
-
-        # Input string with both abbreviated and full day names
-        input_string = "Mon, Tues, Wed,Thur, Friday,Sat,Sun"
 
         # Split the input string into a list of day names while removing spaces
         weekdays = request.form.get("weekdays").replace(" ", "").split(",")
@@ -615,32 +658,41 @@ def add_time_profile(controller_id):
         segment_start = request.form.get("segment_start")
         segment_end = request.form.get("segment_end")
 
+        # Get selected controllers
+        selected_controllers = request.form.getlist("controllers")
+        if not selected_controllers:
+            flash("Please select at least one controller.", "warning")
+            return redirect(url_for("doorctl.add_time_profile", controller_id=controller_id))
+
         # Create a dictionary with the time profile data
         time_profile_data = {
-            "id": int(time_profile_id),  # Include the time profile ID
+            "id": int(time_profile_id),
             "start-date": start_date,
             "end-date": end_date,
             "weekdays": finalized_days,
         }
         time_profile_data['segments'] = [{"start": segment_start, "end": segment_end}, {'start': '00:00', 'end': '00:00'}, {'start': '00:00', 'end': '00:00'}]
-        # additional_segments = [
-        #     {"start": "00:00", "end": "00:00"},
-        #     {"start": "00:00", "end": "00:00"}
-        # ]
-        # time_profile_data['segments'].extend(additional_segments)
-        import json
-        print(json.dumps(time_profile_data, indent=3))
-        # Make a POST request to create the time profile
 
-        url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/time-profile/{time_profile_id}"
-        response = requests.put(
-            url, json=time_profile_data
-        )
-        if response.status_code == 200:
-            flash("Time profile created successfully.", "success")
-            return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
-        else:
-            flash("Failed to create time profile. Please check your input and try again.", "danger")
+        # Apply to all selected controllers
+        success_count = 0
+        failed_controllers = []
+        
+        for ctrl_id in selected_controllers:
+            url = f"{current_app.config['REST_ENDPOINT']}/device/{ctrl_id}/time-profile/{time_profile_id}"
+            response = requests.put(url, json=time_profile_data)
+            
+            if response.status_code == 200:
+                success_count += 1
+            else:
+                failed_controllers.append(ctrl_id)
+        
+        # Show results
+        if success_count > 0:
+            flash(f"Time profile created successfully on {success_count} controller(s).", "success")
+        if failed_controllers:
+            flash(f"Failed to create time profile on controller(s): {', '.join(failed_controllers)}", "danger")
+        
+        return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
 
     return render_template("add_time_profile.html", controller_id=controller_id)
 
@@ -699,6 +751,136 @@ def get_time_profiles(controller_id):
         flash(f"Failed to retrieve time profiles. Status code: {response.status_code}", "danger")
 
     return render_template("get_time_profiles.html", controller_id=controller_id)
+
+
+@doorctl.route("/accesscontrol/controller/<int:controller_id>/time_profile/<int:profile_id>/edit", methods=["GET", "POST"])
+def edit_time_profile(controller_id, profile_id):
+    # Protect profile 1 from being edited
+    if profile_id == 1:
+        flash("Profile 1 is hardcoded and cannot be edited.", "warning")
+        return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
+    
+    # GET request - fetch existing profile data and controller list
+    if request.method == "GET":
+        # Get all controllers from config
+        api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
+        controllers = []
+        for ctrl_id, ctrl_info in api_config['devices'].items():
+            controllers.append({
+                'id': ctrl_id,
+                'name': ctrl_info.get('name', f'Controller {ctrl_id}')
+            })
+        
+        url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/time-profile/{profile_id}"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            profile_data = response.json().get('time-profile', {})
+            return render_template("edit_time_profile.html", controller_id=controller_id, profile_id=profile_id, profile=profile_data, controllers=controllers)
+        else:
+            flash(f"Failed to retrieve time profile. Status code: {response.status_code}", "danger")
+            return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
+    
+    if request.method == "POST":
+        day_mapping = {
+            "Mon": "Monday",
+            "Tue": "Tuesday",
+            "Tues": "Tuesday",
+            "Wed": "Wednesday",
+            "Weds": "Wednesday",
+            "Thur": "Thursday",
+            "Thurs": "Thursday",
+            "Fri": "Friday",
+            "Sat": "Saturday",
+            "Sun": "Sunday"
+        }
+
+        # Process weekdays
+        weekdays = request.form.get("weekdays").replace(" ", "").split(",")
+        finalized_days = []
+        for day in weekdays:
+            finalized_days.append(day_mapping.get(day.strip(), day.strip()))
+        finalized_days = ",".join(finalized_days)
+
+        # Get form data
+        start_date = request.form.get("start_date")
+        end_date = request.form.get("end_date")
+        segment_start = request.form.get("segment_start")
+        segment_end = request.form.get("segment_end")
+
+        # Get selected controllers
+        selected_controllers = request.form.getlist("controllers")
+        if not selected_controllers:
+            flash("Please select at least one controller.", "warning")
+            return redirect(url_for("doorctl.edit_time_profile", controller_id=controller_id, profile_id=profile_id))
+
+        # Create time profile data
+        time_profile_data = {
+            "id": profile_id,
+            "start-date": start_date,
+            "end-date": end_date,
+            "weekdays": finalized_days,
+        }
+        time_profile_data['segments'] = [
+            {"start": segment_start, "end": segment_end},
+            {'start': '00:00', 'end': '00:00'},
+            {'start': '00:00', 'end': '00:00'}
+        ]
+
+        # Apply to all selected controllers
+        success_count = 0
+        failed_controllers = []
+        
+        for ctrl_id in selected_controllers:
+            url = f"{current_app.config['REST_ENDPOINT']}/device/{ctrl_id}/time-profile/{profile_id}"
+            response = requests.put(url, json=time_profile_data)
+            
+            if response.status_code == 200:
+                success_count += 1
+            else:
+                failed_controllers.append(ctrl_id)
+        
+        # Show results
+        if success_count > 0:
+            flash(f"Time profile updated successfully on {success_count} controller(s).", "success")
+        if failed_controllers:
+            flash(f"Failed to update time profile on controller(s): {', '.join(failed_controllers)}", "danger")
+        
+        return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
+
+
+@doorctl.route("/accesscontrol/controller/<int:controller_id>/time_profile/<int:profile_id>/delete", methods=["POST"])
+def delete_time_profile(controller_id, profile_id):
+    # Protect profile 1 from being deleted
+    if profile_id == 1:
+        flash("Profile 1 is hardcoded and cannot be deleted.", "warning")
+        return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
+    
+    try:
+        # Clear the time profile by setting it to an expired/inactive state
+        # We use a past date range and minimal weekdays to effectively disable it
+        time_profile_data = {
+            "id": profile_id,
+            "start-date": "2000-01-01",
+            "end-date": "2000-01-02",
+            "weekdays": "Monday",  # Required field, cannot be empty
+            "segments": [
+                {'start': '00:00', 'end': '00:00'}
+            ]
+        }
+        
+        url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/time-profile/{profile_id}"
+        response = requests.put(url, json=time_profile_data)
+        
+        if response.status_code == 200:
+            flash(f"Time profile {profile_id} deleted successfully.", "success")
+        else:
+            error_msg = response.json().get('message', 'Unknown error') if response.headers.get('content-type') == 'application/json' else response.text
+            flash(f"Failed to delete time profile {profile_id}: {error_msg}", "danger")
+    except Exception as e:
+        flash(f"Error: {str(e)}", "danger")
+    
+    return redirect(url_for("doorctl.get_time_profiles", controller_id=controller_id))
 
 
 ##### cards #####

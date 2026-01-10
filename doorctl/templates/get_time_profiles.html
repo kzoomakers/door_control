@@ -296,6 +296,7 @@
                             <th><i class="bi bi-calendar-x"></i> End Date</th>
                             <th><i class="bi bi-calendar-week"></i> Weekdays</th>
                             <th><i class="bi bi-clock"></i> Time Segments</th>
+                            <th><i class="bi bi-gear"></i> Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -334,6 +335,12 @@
                                 <span class="badge bg-light text-dark">
                                     <i class="bi bi-clock-fill"></i>
                                     24/7 Access
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-lock-fill"></i>
+                                    Hardcoded
                                 </span>
                             </td>
                         </tr>
@@ -377,6 +384,22 @@
                                         <i class="bi bi-stop-fill"></i>
                                         {{ time_profile.segments[0]['end'] }}
                                     </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('doorctl.edit_time_profile', controller_id=controller_id, profile_id=time_profile.id) }}"
+                                       class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil-fill"></i> Edit
+                                    </a>
+                                    <form method="POST"
+                                          action="{{ url_for('doorctl.delete_time_profile', controller_id=controller_id, profile_id=time_profile.id) }}"
+                                          onsubmit="return confirm('Are you sure you want to delete time profile {{ time_profile.id }}?');"
+                                          style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash-fill"></i> Delete
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
