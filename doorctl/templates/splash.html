@@ -1,140 +1,430 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading...</title>
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-        }
-
-        h1 { 
-            color: white;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            margin-bottom: 40px;
-        }
-
-        body {
-            width: 100dvw;
-            height: 100dvh;
-            margin: 0px;
-            display: grid;
-            place-items: center;
-            background: radial-gradient(#222, #000);
-        }
-
-        .loader-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .gear {
-            height: 90px;
-            width: 90px;
-            background-color: grey;
-            border-radius: 50%;
-            position: relative;
-            animation: spinner 4000ms infinite linear;
-        }
-
-        .gear::after {
-            content: "";
-            position: absolute;
-            top: 31px;
-            left: 31px;
+        .particle-loader-wrapper {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #171717;
+            overflow: hidden;
             z-index: 10;
-            height: 18px;
-            width: 18px;
-            border-radius: 40%;
-            background-color: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .tooth {
-            background-color: grey;
-            height: 117px;
-            width: 15px;
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            z-index: 1;
+        }
+
+        #center-svg-container {
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 999 !important;
+            pointer-events: none;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 200px !important;
+            height: 200px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #center-svg-container.ripple-effect::before,
+        #center-svg-container.ripple-effect::after,
+        .third-ripple-wave {
+            content: '';
             position: absolute;
-            left: 37.5px;
-            top: -13.5px;
-            border-radius: 18%;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: -1;
         }
 
-        .tooth.tooth1 {
-            transform: rotate(30deg);
+        #center-svg-container.ripple-effect::before {
+            background-image:
+                radial-gradient(circle at 30% 30%, rgba(255, 179, 0, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 70% 70%, rgba(255, 179, 0, 0.6) 1px, transparent 1px);
+            background-size: 40px 40px, 35px 35px;
+            animation: rippleWave 3s infinite 0s;
         }
 
-        .tooth.tooth2 {
-            transform: rotate(60deg);
+        #center-svg-container.ripple-effect::after {
+            background-image:
+                radial-gradient(circle at 30% 30%, rgba(255, 179, 0, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 70% 70%, rgba(255, 179, 0, 0.6) 1px, transparent 1px);
+            background-size: 40px 40px, 35px 35px;
+            animation: rippleWave 3s infinite 1s;
         }
 
-        .tooth.tooth3 {
-            transform: rotate(90deg);
+        .third-ripple-wave {
+            background-image:
+                radial-gradient(circle at 60% 40%, rgba(255, 179, 0, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 40% 60%, rgba(255, 179, 0, 0.5) 1px, transparent 1px);
+            background-size: 45px 45px, 38px 38px;
+            animation: rippleWave 2.5s infinite 1.5s;
         }
 
-        .tooth.tooth4 {
-            transform: rotate(120deg);
+        #center-svg-container svg {
+            width: 180px !important;
+            height: 180px !important;
+            opacity: 0.95;
+            transition: opacity 0.7s, transform 0.7s;
+            display: block !important;
         }
 
-        .tooth.tooth5 {
-            transform: rotate(150deg);
+        .glow-fade {
+            animation: svgGlowFade 0.6s infinite alternate ease-in-out;
+            filter:
+                drop-shadow(0 0 24px #ff00cc) drop-shadow(0 0 48px #00ffe5) drop-shadow(0 0 72px #001aff);
         }
 
-        .tooth.tooth6 {
-            transform: rotate(180deg);
-        }
+        @keyframes svgGlowFade {
+            0% {
+                opacity: 0.7;
+                filter: drop-shadow(0 0 12px #84005c88) drop-shadow(0 0 24px #00ffd488) drop-shadow(0 0 36px #a83aff44);
+            }
 
-        .gear:nth-child(2) {
-            margin-top: 80px;
-            margin-left: 8px;
-            animation: spinner-rev 4000ms linear infinite;
-        }
-
-        @keyframes spinner {
-            to {
-                transform: rotate(360deg);
+            100% {
+                opacity: 1.0;
+                filter: drop-shadow(0 0 32px #ff00f2) drop-shadow(0 0 64px #00fbff) drop-shadow(0 0 96px #9000ff);
             }
         }
 
-        @keyframes spinner-rev {
-            to {
-                transform: rotate(-360deg);
+        @keyframes rippleWave {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+                background-size: 40px 40px, 35px 35px;
             }
+
+            100% {
+                width: 600px;
+                height: 600px;
+                opacity: 0;
+                background-size: 80px 80px, 75px 75px;
+            }
+        }
+
+        #loading-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% + 150px));
+            color: white;
+            font-size: 12pt;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+            text-align: center;
+            pointer-events: none;
         }
     </style>
 </head>
+
 <body>
-    <div>
-        <h1>Waiting for Uhppoted</h1>
-        
-        <div class="loader-container">
-            <div class="gear">
-                <div class="tooth tooth1"></div>
-                <div class="tooth tooth2"></div>
-                <div class="tooth tooth3"></div>
-                <div class="tooth tooth4"></div>
-                <div class="tooth tooth5"></div>
-                <div class="tooth tooth6"></div>
-            </div>
-            <div class="gear">
-                <div class="tooth tooth1"></div>
-                <div class="tooth tooth2"></div>
-                <div class="tooth tooth3"></div>
-                <div class="tooth tooth4"></div>
-                <div class="tooth tooth5"></div>
-                <div class="tooth tooth6"></div>
-            </div>
-        </div>
+    <div class="particle-loader-wrapper">
+        <canvas id="particle-canvas"></canvas>
+        <div id="center-svg-container"></div>
+        <div id="loading-text">Connecting to controllers...</div>
     </div>
 
+    <!-- Load Three.js from CDN (Matching original project version) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.0/three.min.js"></script>
     <script>
+        // --- SVG CONTENT ---
+        const AI_BRAIN_SVG_CONTENT = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <linearGradient id="brain-stroke-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a83aff"/>
+      <stop offset="50%" stop-color="#0087cb"/>
+      <stop offset="100%" stop-color="#ff23fc"/>
+    </linearGradient>
+  </defs>
+  <path d="M12 18V5" stroke="url(#brain-stroke-gradient)"/>
+  <path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" stroke="url(#brain-stroke-gradient)"/>
+  <path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" stroke="url(#brain-stroke-gradient)"/>
+  <path d="M17.997 5.125a4 4 0 0 1 2.526 5.77" stroke="url(#brain-stroke-gradient)"/>
+  <path d="M18 18a4 4 0 0 0 2-7.464" stroke="url(#brain-stroke-gradient)"/>
+  <path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" stroke="url(#brain-stroke-gradient)"/>
+  <path d="M6 18a4 4 0 0 1-2-7.464" stroke="url(#brain-stroke-gradient)"/>
+  <path d="M6.003 5.125a4 4 0 0 0-2.526 5.77" stroke="url(#brain-stroke-gradient)"/>
+</svg>`;
+
+        // === LAYER SETTINGS (Direct from demo-particles.js) ===
+        const LAYERS = [
+            { enabled: true, particleCount: 20000, baseSize: 0.0001, sizeRandomness: 1, baseOpacity: 5, opacityRandomness: 1.0, rotationSpeed: -0.004, turbulence: 0.6, scatterSize: 0.6, collisionStrength: 0.2, colorStart: '#898989', colorEnd: '#ffffff', blending: 'additive', brightness: 5.0, shape: 'circle', uniformity: 0.0, ripple: false, rippleSpeed: 0.5 },
+            { enabled: true, particleCount: 1000, baseSize: 0.03, sizeRandomness: 1.0, baseOpacity: 5, opacityRandomness: 1.0, rotationSpeed: 0.003, turbulence: 0.1, scatterSize: 1.8, collisionStrength: 0.8, colorStart: '#0fff00', colorEnd: '#00ffe8', blending: 'additive', brightness: 5.0, shape: 'organic', uniformity: 0.3, ripple: false, rippleSpeed: 1.0 },
+            { enabled: true, particleCount: 700, baseSize: 0.03, sizeRandomness: 1.5, baseOpacity: 5.0, opacityRandomness: 0.7, rotationSpeed: -0.002, turbulence: 0.4, scatterSize: -4, collisionStrength: 1, colorStart: '#ff00ff', colorEnd: '#ffffff', blending: 'additive', brightness: 1.0, shape: 'organic', uniformity: 0.1, ripple: true, rippleSpeed: 1.0 },
+            { enabled: true, particleCount: 8, baseSize: 0.3, sizeRandomness: 0.7, baseOpacity: 5.0, opacityRandomness: 1.3, rotationSpeed: -0.007, turbulence: 0.2, scatterSize: 1.5, collisionStrength: 1.5, colorStart: '#FA2C02', colorEnd: '#02FAEE', glow: true, blending: 'additive', brightness: 2.2, shape: 'organic', uniformity: 0.2, ripple: false, rippleSpeed: 1.0 },
+            { enabled: true, particleCount: 27, baseSize: 0.17, sizeRandomness: 1, baseOpacity: 2.0, opacityRandomness: 1, speed: 0.01, outwardSpeed: 0.7, color: '#00ffe5', binaryColor0: '#ff9900', binaryColor1: '#00ffff', blending: 'additive', brightness: 5.0, shape: 'binary', uniformity: 0.3, ripple: true, rippleSpeed: 1 }
+        ];
+
+        const RADIUS = 2.2;
+        let scene, camera, renderer, layers = [], mouse = { x: 0, y: 0 }, animationFrameId;
+
+        function init() {
+            const canvas = document.getElementById('particle-canvas');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.z = 7;
+
+            renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0x000000, 0);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            for (let l = 0; l < LAYERS.length; l++) {
+                const settings = LAYERS[l];
+                if (!settings.enabled) continue;
+
+                if (settings.shape === 'binary') {
+                    initBinaryLayer(settings);
+                    continue;
+                }
+
+                const geometry = initParticleGeometry(settings);
+                const material = createParticleMaterial(settings, l);
+                const points = new THREE.Points(geometry, material);
+                scene.add(points);
+                layers.push({ points, uniforms: material.uniforms, settings });
+            }
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+            setupSVG();
+            animate();
+        }
+
+        function initParticleGeometry(settings) {
+            const N = settings.particleCount;
+            const positions = new Float32Array(N * 3), angles = new Float32Array(N), speeds = new Float32Array(N);
+            const sizes = new Float32Array(N), opacities = new Float32Array(N), randoms = new Float32Array(N), colorTs = new Float32Array(N);
+
+            for (let i = 0; i < N; i++) {
+                const angle = (i / N) * Math.PI * 2;
+                const r = RADIUS + (Math.random() - 0.5) * 0.12;
+                positions[i * 3] = Math.cos(angle) * r;
+                positions[i * 3 + 1] = Math.sin(angle) * r;
+                positions[i * 3 + 2] = 0;
+                angles[i] = angle;
+                speeds[i] = 0.2 + Math.random() * 0.7;
+                sizes[i] = settings.baseSize * (1.0 + (Math.random() - 0.5) * settings.sizeRandomness * 2.0);
+                opacities[i] = settings.baseOpacity * (1.0 + (Math.random() - 0.5) * settings.opacityRandomness * 2.0);
+                randoms[i] = Math.random();
+                colorTs[i] = i / N;
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('aAngle', new THREE.BufferAttribute(angles, 1));
+            geometry.setAttribute('aSpeed', new THREE.BufferAttribute(speeds, 1));
+            geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+            geometry.setAttribute('aOpacity', new THREE.BufferAttribute(opacities, 1));
+            geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 1));
+            geometry.setAttribute('aColorT', new THREE.BufferAttribute(colorTs, 1));
+            return geometry;
+        }
+
+        function createParticleMaterial(settings, l) {
+            let blendingMode = THREE.AdditiveBlending;
+            if (settings.blending === 'normal') blendingMode = THREE.NormalBlending;
+            else if (settings.blending === 'multiply') blendingMode = THREE.MultiplyBlending;
+
+            return new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uMouse: { value: new THREE.Vector2(0, 0) },
+                    uRotation: { value: 0 },
+                    uTurbulence: { value: settings.turbulence },
+                    uScatter: { value: settings.scatterSize },
+                    uCollision: { value: settings.collisionStrength },
+                    uColorStart: { value: new THREE.Color(settings.colorStart) },
+                    uColorEnd: { value: new THREE.Color(settings.colorEnd) },
+                    uGlow: { value: settings.glow ? 1.0 : 0.0 },
+                    uBrightness: { value: settings.brightness },
+                    uShape: { value: settings.shape === 'circle' ? 0 : settings.shape === 'square' ? 1 : 2 },
+                    uUniformity: { value: settings.uniformity },
+                    uRipple: { value: settings.ripple ? 1.0 : 0.0 },
+                    uRippleSpeed: { value: settings.rippleSpeed }
+                },
+                vertexShader: `
+            attribute float aAngle; attribute float aSpeed; attribute float aSize;
+            attribute float aOpacity; attribute float aRandom; attribute float aColorT;
+            uniform float uTime; uniform vec2 uMouse; uniform float uRotation;
+            uniform float uTurbulence; uniform float uScatter; uniform float uCollision;
+            uniform float uGlow; uniform float uUniformity; uniform float uRipple; uniform float uRippleSpeed;
+            varying float vAlpha; varying float vOpacity; varying float vGlow; varying float vRandom; varying float vColorT;
+
+            void main() {
+                float swirl = aAngle + uTime * aSpeed * 0.18;
+                float ripple = (uRipple > 0.5) ? sin(uTime * uRippleSpeed + aAngle * 4.0) * 0.5 : 0.0;
+                float r = 2.2 + ripple;
+                float turb = uTurbulence * (0.5 + 0.5 * aRandom);
+                float scatter = uScatter * (0.5 + 0.5 * aRandom);
+                float mx = uMouse.x * 0.7; float my = uMouse.y * 0.7;
+                float organicTime = mix(uTime, uTime + aRandom * 10.0, 1.0 - uUniformity);
+                float organic = 0.0;
+                if (uTurbulence > 0.01) {
+                    organic = sin(swirl * 6.0 + organicTime * 2.0 + aRandom * 10.0) * turb + cos(swirl * 3.0 - organicTime + aRandom * 5.0) * turb;
+                }
+                float px = cos(swirl) * (r + organic + scatter * (aRandom - 0.5) + mx * sin(swirl + organicTime));
+                float py = sin(swirl) * (r + organic + scatter * (aRandom - 0.5) + my * cos(swirl - organicTime));
+                float repel = 1.0;
+                if (uCollision > 0.01) {
+                    float dist = length(vec2(px, py));
+                    repel = 1.0 + uCollision * 0.2 / (dist + 0.1);
+                }
+                vec3 pos = vec3(px * repel, py * repel, 0.0);
+                float rot = uRotation; float cosR = cos(rot); float sinR = sin(rot);
+                vec3 rotated = vec3(pos.x * cosR - pos.y * sinR, pos.x * sinR + pos.y * cosR, 0.0);
+                vAlpha = 0.6 + 0.2 * sin(swirl * 8.0 + organicTime * 2.0);
+                vOpacity = aOpacity; vGlow = uGlow; vRandom = aRandom; vColorT = aColorT;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(rotated, 1.0);
+                gl_PointSize = aSize * (0.7 + 0.6 * vAlpha) * (400.0 / length(gl_Position.xyz));
+            }
+        `,
+                fragmentShader: `
+            uniform vec3 uColorStart; uniform vec3 uColorEnd; uniform float uTime;
+            uniform float uBrightness; uniform int uShape;
+            varying float vAlpha; varying float vOpacity; varying float vGlow; varying float vRandom; varying float vColorT;
+
+            void main() {
+                float d = length(gl_PointCoord - vec2(0.5));
+                if (uShape == 0 && d > 0.5) discard;
+                if (uShape == 1) {} 
+                else if (uShape == 2) {
+                    float edge = 0.5 + 0.35 * sin(32.0 * atan(gl_PointCoord.y-0.5, gl_PointCoord.x-0.5) + vRandom * 10.0 + uTime);
+                    if (d > edge) discard;
+                }
+                float alpha = smoothstep(0.35, 0.15, d) * vAlpha * vOpacity * 0.7;
+                vec3 color = mix(uColorStart, uColorEnd, vColorT);
+                if (vGlow > 0.5) alpha *= (0.5 + 0.5 * sin(uTime * 2.0 + vRandom * 10.0));
+                if (alpha < 0.04) discard;
+                gl_FragColor = vec4(color * uBrightness, alpha);
+            }
+        `,
+                transparent: true, depthWrite: false, blending: blendingMode
+            });
+        }
+
+        function initBinaryLayer(settings) {
+            const N = settings.particleCount;
+            const tex0 = createTextTexture('0', settings.binaryColor0);
+            const tex1 = createTextTexture('1', settings.binaryColor1);
+            const binaryLayer = { radii: new Float32Array(N), angles: new Float32Array(N), opacities: new Float32Array(N), points: [], settings };
+
+            for (let i = 0; i < N; i++) {
+                const isOne = Math.random() > 0.5;
+                const mat = new THREE.PointsMaterial({
+                    size: settings.baseSize * (1.0 + (Math.random() - 0.5) * settings.sizeRandomness * 2.0),
+                    map: isOne ? tex1 : tex0, transparent: true, opacity: settings.baseOpacity,
+                    blending: THREE.AdditiveBlending, depthWrite: false, color: '#white'
+                });
+                const mesh = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, 0]), 3)), mat);
+                scene.add(mesh);
+                binaryLayer.points.push(mesh);
+                binaryLayer.angles[i] = (i / N) * Math.PI * 2 + Math.random() * Math.PI * 2;
+                binaryLayer.radii[i] = 0.0;
+                binaryLayer.opacities[i] = settings.baseOpacity;
+            }
+            layers.push({ binaryLayer, settings, type: 'binary' });
+        }
+
+        function createTextTexture(text, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.font = '50px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = color; ctx.fillText(text, 32, 32);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+            const now = performance.now();
+
+            for (let l = 0; l < layers.length; l++) {
+                const layer = layers[l];
+                if (layer.type === 'binary') {
+                    const { binaryLayer, settings } = layer;
+                    for (let i = 0; i < settings.particleCount; i++) {
+                        binaryLayer.radii[i] += settings.outwardSpeed * 0.01;
+                        if (binaryLayer.radii[i] > 3.5) binaryLayer.radii[i] = 0;
+                        let ripple = settings.ripple ? Math.sin(now * 0.001 * settings.rippleSpeed + binaryLayer.angles[i] * 4.0) * 0.5 : 0;
+                        const r = binaryLayer.radii[i] + ripple;
+                        binaryLayer.points[i].position.set(Math.cos(binaryLayer.angles[i]) * r, Math.sin(binaryLayer.angles[i]) * r, 0);
+                        binaryLayer.points[i].material.opacity = (binaryLayer.radii[i] > 2.0) ? binaryLayer.opacities[i] * (1.0 - (binaryLayer.radii[i] - 2.0) / 1.5) : binaryLayer.opacities[i];
+                    }
+                } else {
+                    layer.uniforms.uTime.value += 0.016;
+                    layer.uniforms.uRotation.value += layer.settings.rotationSpeed;
+                    layer.uniforms.uMouse.value.set(mouse.x, mouse.y);
+                }
+            }
+            renderer.render(scene, camera);
+        }
+
+        function onMouseMove(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function setupSVG() {
+            const container = document.getElementById('center-svg-container');
+            container.innerHTML = AI_BRAIN_SVG_CONTENT;
+            const svgEl = container.querySelector('svg');
+            svgEl.setAttribute('stroke', '#ffb300');
+            svgEl.setAttribute('stroke-width', '0.2');
+            svgEl.classList.add('glow-fade');
+            container.classList.add('ripple-effect');
+
+            const thirdRipple = document.createElement('div');
+            thirdRipple.className = 'third-ripple-wave';
+            container.appendChild(thirdRipple);
+
+            let time = 0;
+            function animateStroke() {
+                const sw = 0.2 + (2.3 * Math.sin((time % 750) / 750 * Math.PI));
+                svgEl.setAttribute('stroke-width', sw.toFixed(2));
+                time += 16;
+                requestAnimationFrame(animateStroke);
+            }
+            animateStroke();
+        }
+
+        init();
+
+        // Redirect after 3 seconds
         setTimeout(function(){
             window.location.href = "{{ url_for('doorctl.controllers_list') }}";
-        }, 3000); // 3000 milliseconds = 3 seconds
+        }, 3000);
     </script>
 </body>
+
 </html>
