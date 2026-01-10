@@ -325,10 +325,18 @@
         // Show delete modal
         function showDeleteModal(cardNumber, cardName) {
             cardToDelete = cardNumber;
-            document.getElementById('deleteCardNumber').textContent = cardNumber;
-            document.getElementById('deleteCardName').textContent = cardName;
-            const modal = new bootstrap.Modal(document.getElementById('deleteCardModal'));
-            modal.show();
+            const numberEl = document.getElementById('deleteCardNumber');
+            const nameEl = document.getElementById('deleteCardName');
+            const modalEl = document.getElementById('deleteCardModal');
+            
+            if (numberEl && nameEl && modalEl) {
+                numberEl.textContent = cardNumber;
+                nameEl.textContent = cardName;
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            } else {
+                console.error('Modal elements not found');
+            }
         }
 
         // Confirm delete from modal
