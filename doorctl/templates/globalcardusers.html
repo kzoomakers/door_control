@@ -477,7 +477,7 @@
                                             <button class="btn btn-sm btn-danger delete-card-btn"
                                                     data-card-number="{{ card.card_number }}"
                                                     data-card-name="{{ card.name }}"
-                                                    data-assigned-devices="{{ card.assigned_devices|tojson|escape }}">
+                                                    data-assigned-devices='{{ card.assigned_devices|tojson if card.assigned_devices else "[]" }}'>
                                                 <i class="bi bi-trash"></i> Delete
                                             </button>
                                         </div>
@@ -845,7 +845,18 @@
             btn.addEventListener('click', function() {
                 const cardNumber = this.dataset.cardNumber;
                 const cardName = this.dataset.cardName;
-                const assignedDevices = JSON.parse(this.dataset.assignedDevices);
+                let assignedDevices = [];
+                
+                // Safely parse assigned devices
+                try {
+                    const devicesData = this.dataset.assignedDevices;
+                    if (devicesData && devicesData.trim() !== '') {
+                        assignedDevices = JSON.parse(devicesData);
+                    }
+                } catch (e) {
+                    console.error('Error parsing assigned devices:', e);
+                    assignedDevices = [];
+                }
                 
                 currentCardNumber = cardNumber;
                 document.getElementById('deleteActiveCardNumber').textContent = cardNumber;

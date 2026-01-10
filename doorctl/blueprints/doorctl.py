@@ -120,6 +120,11 @@ def api_get_controllers():
     try:
         api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
         controllers = []
+        
+        # Check if devices exist in config
+        if not api_config or 'devices' not in api_config:
+            return jsonify({'controllers': [], 'error': 'No devices configured'}), 200
+        
         for device_id, device_info in api_config['devices'].items():
             # Determine number of doors based on device type
             device_type = device_info.get('door.type', 'UTO311-L04')  # Default to 4 doors
@@ -139,9 +144,10 @@ def api_get_controllers():
                 'device_type': device_type,
                 'num_doors': num_doors
             })
-        return jsonify({'controllers': controllers})
+        return jsonify({'controllers': controllers}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f'Error in api_get_controllers: {str(e)}')
+        return jsonify({'controllers': [], 'error': str(e)}), 200
 
 
 @doorctl.route('/accesscontrol/global/cards/add', methods=['POST'])
