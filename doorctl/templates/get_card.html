@@ -227,14 +227,7 @@
                         <i class="bi bi-person"></i>
                         Name
                     </div>
-                    <div class="info-value">
-                        {{ user_data['name'] }}
-                        {% if user_data.get('note') and user_data['note'] != '' and user_data['note'] != 'None' %}
-                        <div style="font-size: 0.875rem; color: #6c757d; font-weight: 400; margin-top: 0.5rem;">
-                            NOTE: {{ user_data['note'] }}
-                        </div>
-                        {% endif %}
-                    </div>
+                    <div class="info-value">{{ user_data['name'] }}</div>
                 </div>
                 
                 <div class="info-item" style="border-left-color: var(--info-color);">
@@ -253,6 +246,18 @@
                     <div class="info-value">{{ user_data['membership_type'] }}</div>
                 </div>
             </div>
+            
+            {% if user_data.get('note') and user_data['note'] != '' and user_data['note'] != 'None' and user_data['note']|lower != 'undefined' %}
+            <div style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 1rem 1.25rem; border-left: 4px solid #ffc107;">
+                    <div style="font-size: 0.875rem; color: #856404; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="bi bi-sticky"></i>
+                        NOTE
+                    </div>
+                    <div style="color: #856404; font-size: 1rem;">{{ user_data['note'] }}</div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Card Details -->

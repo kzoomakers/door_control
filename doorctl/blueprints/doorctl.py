@@ -943,7 +943,7 @@ def show_cards(controller_id):
 
 
     db_cards = CardMemberMapping.query.all()
-    card_data = {card.card_number: (card.name, card.email, card.membership_type) for card in db_cards}
+    card_data = {card.card_number: (card.name, card.email, card.membership_type, card.note) for card in db_cards}
 
     # Fetch the list of cards from the API
     url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/cards"
@@ -954,9 +954,9 @@ def show_cards(controller_id):
     if response.status_code == 200:
         for card_number in response.json()['cards']:
             if card_number in card_data:
-                name, email, membership_type = card_data[card_number]
+                name, email, membership_type, note = card_data[card_number]
             else:
-                name, email, membership_type = ("Undefined", "Undefined", "Undefined")
+                name, email, membership_type, note = ("Undefined", "Undefined", "Undefined", None)
             
             # Check if card is deactivated by fetching its door permissions
             card_url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
@@ -970,7 +970,7 @@ def show_cards(controller_id):
                 if doors and all(value == 0 for value in doors.values()):
                     is_deactivated = True
             
-            card_info = {"name": name, "email": email, "membership_type": membership_type}
+            card_info = {"name": name, "email": email, "membership_type": membership_type, "note": note}
             
             if is_deactivated:
                 deactivated_data[card_number] = card_info

@@ -85,7 +85,7 @@
                             <div class="card-item" data-card="{{ card }}" data-name="{{ card_info['name'] }}">
                                 <div class="card-info">
                                     <i class="bi bi-credit-card text-primary" style="font-size: 1.5rem;"></i>
-                                    <div>
+                                    <div style="flex: 1;">
                                         <div class="card-number">{{ card }}</div>
                                         <div class="card-name">
                                             {{ card_info['name'] }}
@@ -93,6 +93,11 @@
                                             <span class="badge bg-secondary ms-2" style="font-size: 0.65rem; vertical-align: middle;">{{ card_info['membership_type'] }}</span>
                                             {% endif %}
                                         </div>
+                                        {% if card_info.get('note') and card_info['note'] != '' and card_info['note'] != 'None' and card_info['note']|lower != 'undefined' %}
+                                        <div style="font-size: 0.8rem; color: #856404; background: #fff3cd; border-left: 3px solid #ffc107; padding: 0.25rem 0.5rem; margin-top: 0.5rem; border-radius: 4px;">
+                                            <i class="bi bi-sticky"></i> <strong>NOTE:</strong> {{ card_info['note'] }}
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="card-actions">
@@ -148,7 +153,7 @@
                                     <div class="card-item" data-card="{{ card }}" data-name="{{ card_info['name'] }}">
                                         <div class="card-info">
                                             <i class="bi bi-credit-card text-danger" style="font-size: 1.5rem;"></i>
-                                            <div>
+                                            <div style="flex: 1;">
                                                 <div class="card-number">
                                                     {{ card }}
                                                     <span class="badge bg-danger ms-2" style="font-size: 0.65rem; vertical-align: middle;">DEACTIVATED</span>
@@ -159,6 +164,11 @@
                                                     <span class="badge bg-secondary ms-2" style="font-size: 0.65rem; vertical-align: middle;">{{ card_info['membership_type'] }}</span>
                                                     {% endif %}
                                                 </div>
+                                                {% if card_info.get('note') and card_info['note'] != '' and card_info['note'] != 'None' and card_info['note']|lower != 'undefined' %}
+                                                <div style="font-size: 0.8rem; color: #856404; background: #fff3cd; border-left: 3px solid #ffc107; padding: 0.25rem 0.5rem; margin-top: 0.5rem; border-radius: 4px;">
+                                                    <i class="bi bi-sticky"></i> <strong>NOTE:</strong> {{ card_info['note'] }}
+                                                </div>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         <div class="card-actions">
