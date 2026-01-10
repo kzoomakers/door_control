@@ -235,12 +235,27 @@
                 </div>
                 
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <label for="membership_type" class="form-label">
-                            <i class="bi bi-award"></i> Membership Type
+                            <i class="bi bi-award"></i> Membership Badge
                         </label>
-                        <input type="text" name="membership_type" id="membership_type" class="form-control"
-                               placeholder="Enter membership type">
+                        <select name="membership_type" id="membership_type" class="form-select" onchange="toggleOtherField(this)">
+                            <option value="">Undefined</option>
+                            <option value="Regular Hours">Regular Hours</option>
+                            <option value="Volunteer">Volunteer</option>
+                            <option value="Partial Access">Partial Access</option>
+                            <option value="More Hours">More Hours</option>
+                            <option value="24/7">24/7</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="membership_type_other" class="form-label">
+                            <i class="bi bi-pencil"></i> Custom Badge
+                        </label>
+                        <input type="text" name="membership_type_other" id="membership_type_other" class="form-control"
+                               placeholder="Enter custom badge" disabled>
                     </div>
                     
                     <div class="col-md-6">
@@ -387,6 +402,18 @@
     <!-- Custom JavaScript -->
     <script>
         let cardToDelete = null;
+
+        // Toggle "Other" text field based on dropdown selection
+        function toggleOtherField(selectElement) {
+            const otherField = document.getElementById('membership_type_other');
+            if (selectElement.value === 'Other') {
+                otherField.disabled = false;
+                otherField.focus();
+            } else {
+                otherField.disabled = true;
+                otherField.value = '';
+            }
+        }
 
         // Search functionality for active cards
         document.getElementById('cardSearch')?.addEventListener('input', function(e) {

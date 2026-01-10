@@ -89,16 +89,32 @@
                         <label for="phone" class="form-label">
                             <i class="bi bi-telephone"></i> Phone
                         </label>
-                        <input type="text" name="phone" id="phone" class="form-control" 
+                        <input type="text" name="phone" id="phone" class="form-control"
                                value="{{ user_data['phone'] }}" placeholder="Enter phone">
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <label for="membership_type" class="form-label">
-                            <i class="bi bi-award"></i> Membership Type
+                            <i class="bi bi-award"></i> Membership Badge
                         </label>
-                        <input type="text" name="membership_type" id="membership_type" class="form-control" 
-                               value="{{ user_data['membership_type'] }}" placeholder="Enter membership type">
+                        <select name="membership_type" id="membership_type" class="form-select" onchange="toggleOtherField(this)">
+                            <option value="" {% if not user_data['membership_type'] or user_data['membership_type'] == 'Undefined' %}selected{% endif %}>Undefined</option>
+                            <option value="Regular Hours" {% if user_data['membership_type'] == 'Regular Hours' %}selected{% endif %}>Regular Hours</option>
+                            <option value="Volunteer" {% if user_data['membership_type'] == 'Volunteer' %}selected{% endif %}>Volunteer</option>
+                            <option value="Partial Access" {% if user_data['membership_type'] == 'Partial Access' %}selected{% endif %}>Partial Access</option>
+                            <option value="More Hours" {% if user_data['membership_type'] == 'More Hours' %}selected{% endif %}>More Hours</option>
+                            <option value="24/7" {% if user_data['membership_type'] == '24/7' %}selected{% endif %}>24/7</option>
+                            <option value="Other" {% if user_data['membership_type'] and user_data['membership_type'] not in ['', 'Undefined', 'Regular Hours', 'Volunteer', 'Partial Access', 'More Hours', '24/7'] %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="membership_type_other" class="form-label">
+                            <i class="bi bi-pencil"></i> Custom Badge
+                        </label>
+                        <input type="text" name="membership_type_other" id="membership_type_other" class="form-control"
+                               value="{% if user_data['membership_type'] and user_data['membership_type'] not in ['', 'Undefined', 'Regular Hours', 'Volunteer', 'Partial Access', 'More Hours', '24/7'] %}{{ user_data['membership_type'] }}{% endif %}"
+                               placeholder="Enter custom badge" {% if not user_data['membership_type'] or user_data['membership_type'] in ['', 'Undefined', 'Regular Hours', 'Volunteer', 'Partial Access', 'More Hours', '24/7'] %}disabled{% endif %}>
                     </div>
                     
                     <div class="col-12">
@@ -197,6 +213,18 @@
     
     <!-- Custom JavaScript -->
     <script>
+        // Toggle "Other" text field based on dropdown selection
+        function toggleOtherField(selectElement) {
+            const otherField = document.getElementById('membership_type_other');
+            if (selectElement.value === 'Other') {
+                otherField.disabled = false;
+                otherField.focus();
+            } else {
+                otherField.disabled = true;
+                otherField.value = '';
+            }
+        }
+
         // Auto-dismiss alerts after 5 seconds
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');

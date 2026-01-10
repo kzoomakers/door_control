@@ -1,52 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Global Card Metadata</title>
-    <!-- Include Bootstrap 5 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-alpha2/dist/css/bootstrap.min.css">
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <style>
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .form-section h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1>Edit Global Card Metadata</h1>
-        <p>This is globally stored data, it is independent of any specific controller.</p>
-        <form method="POST">
-            <div class="mb-3">
-                <label for="name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="name" name="name" value="{{ card.name }}">
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" value="{{ card.email }}">
-            </div>
-            <div class="mb-3">
-                <label for="phone" class="form-label">Phone</label>
-                <input type="phone" class="form-control" id="phone" name="phone" value="{{ card.phone }}">
-            </div>
-            <div class="mb-3">
-                <label for="membership_type" class="form-label">Membership Type</label>
-                <select class="form-select" id="membership_type" name="membership_type">
-                    <option value="Undefined" {% if card.membership_type == 'Undefined' %}undefined{% endif %}>Undefined</option>
-                    <option value="Partial Access" {% if card.membership_type == 'Partial Access' %}selected{% endif %}>Partial Access</option>
-                    <option value="Regular Hours" {% if card.membership_type == 'Regular Hours' %}selected{% endif %}>Regular Hours</option>
-                    <option value="More Hours" {% if card.membership_type == 'More Hours' %}selected{% endif %}>More Hours</option>
-                    <option value="24/7" {% if card.membership_type == '24/7' %}selected{% endif %}>24/7</option>
-                    <option value="Volunteer" {% if card.membership_type == 'Volunteer' %}selected{% endif %}>Volunteer</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="note" class="form-label">Note</label>
-                <input type="note" class="form-control" id="note" name="note" value="{{ card.note }}">
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-        </form>
-    </div>
-    <div class="container mt-4">
-        <div class="btn-group">
-            <a href="{{ url_for('doorctl.globalcards') }}" class="btn btn-primary active">
-                Back to Global Card Metadata List
-            </a>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="bi bi-pencil-square"></i> Edit Global Card Metadata</h1>
+            <p class="mb-0 mt-2">Card Number: {{ card.card_number }}</p>
         </div>
     </div>
+
+    <div class="container pb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+               <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                   <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                   {{ message }}
+                   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+               </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('doorctl.globalcards_edit', card_id=card.card_number) }}">
+            <!-- Global Metadata Section -->
+            <div class="form-section">
+                <h3><i class="bi bi-person-circle"></i> User Information (Global Metadata)</h3>
+                <p class="text-muted mb-4">This is globally stored data, it is independent of any specific controller.</p>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">
+                            <i class="bi bi-person"></i> Name
+                        </label>
+                        <input type="text" name="name" id="name" class="form-control" 
+                               value="{{ card.name }}" placeholder="Enter name">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">
+                            <i class="bi bi-envelope"></i> Email
+                        </label>
+                        <input type="email" name="email" id="email" class="form-control" 
+                               value="{{ card.email }}" placeholder="Enter email">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="phone" class="form-label">
+                            <i class="bi bi-telephone"></i> Phone
+                        </label>
+                        <input type="text" name="phone" id="phone" class="form-control" 
+                               value="{{ card.phone }}" placeholder="Enter phone">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="membership_type" class="form-label">
+                            <i class="bi bi-award"></i> Membership Badge
+                        </label>
+                        <select name="membership_type" id="membership_type" class="form-select" onchange="toggleOtherField(this)">
+                            <option value="" {% if not card.membership_type or card.membership_type == 'Undefined' %}selected{% endif %}>Undefined</option>
+                            <option value="Regular Hours" {% if card.membership_type == 'Regular Hours' %}selected{% endif %}>Regular Hours</option>
+                            <option value="Volunteer" {% if card.membership_type == 'Volunteer' %}selected{% endif %}>Volunteer</option>
+                            <option value="Partial Access" {% if card.membership_type == 'Partial Access' %}selected{% endif %}>Partial Access</option>
+                            <option value="More Hours" {% if card.membership_type == 'More Hours' %}selected{% endif %}>More Hours</option>
+                            <option value="24/7" {% if card.membership_type == '24/7' %}selected{% endif %}>24/7</option>
+                            <option value="Other" {% if card.membership_type and card.membership_type not in ['', 'Undefined', 'Regular Hours', 'Volunteer', 'Partial Access', 'More Hours', '24/7'] %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="membership_type_other" class="form-label">
+                            <i class="bi bi-pencil"></i> Custom Badge
+                        </label>
+                        <input type="text" name="membership_type_other" id="membership_type_other" class="form-control" 
+                               value="{% if card.membership_type and card.membership_type not in ['', 'Undefined', 'Regular Hours', 'Volunteer', 'Partial Access', 'More Hours', '24/7'] %}{{ card.membership_type }}{% endif %}"
+                               placeholder="Enter custom badge" {% if not card.membership_type or card.membership_type in ['', 'Undefined', 'Regular Hours', 'Volunteer', 'Partial Access', 'More Hours', '24/7'] %}disabled{% endif %}>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label for="note" class="form-label">
+                            <i class="bi bi-sticky"></i> Note
+                        </label>
+                        <textarea name="note" id="note" class="form-control" rows="2" 
+                                  placeholder="Enter notes">{{ card.note }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                <a href="{{ url_for('doorctl.globalcards') }}"
+                   class="btn btn-secondary btn-icon">
+                    <i class="bi bi-arrow-left"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary btn-icon">
+                    <i class="bi bi-check-lg"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Toggle "Other" text field based on dropdown selection
+        function toggleOtherField(selectElement) {
+            const otherField = document.getElementById('membership_type_other');
+            if (selectElement.value === 'Other') {
+                otherField.disabled = false;
+                otherField.focus();
+            } else {
+                otherField.disabled = true;
+                otherField.value = '';
+            }
+        }
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
 </body>
 </html>
-

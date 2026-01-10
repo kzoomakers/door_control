@@ -173,7 +173,12 @@ def globalcards_edit(card_id):
         card.email = request.form['email']
         card.phone = request.form['phone']
         card.note = request.form['note']
-        card.membership_type = request.form['membership_type']
+        
+        # Handle membership_type with "Other" option
+        membership_type = request.form.get('membership_type', '')
+        if membership_type == 'Other':
+            membership_type = request.form.get('membership_type_other', '')
+        card.membership_type = membership_type
 
         try:
             # Merge the card into the session to update or insert
@@ -1053,7 +1058,12 @@ def edit_card_on_controller(controller_id, card_number):
             card_user.email = request.form['email']
             card_user.phone = request.form.get('phone', '')
             card_user.note = request.form.get('note', '')
-            card_user.membership_type = request.form['membership_type']
+            
+            # Handle membership_type with "Other" option
+            membership_type = request.form.get('membership_type', '')
+            if membership_type == 'Other':
+                membership_type = request.form.get('membership_type_other', '')
+            card_user.membership_type = membership_type
             
             db.session.merge(card_user)
             db.session.commit()
@@ -1150,7 +1160,12 @@ def add_card(controller_id):
             card_user.email = request.form.get('email', '')
             card_user.phone = request.form.get('phone', '')
             card_user.note = request.form.get('note', '')
-            card_user.membership_type = request.form.get('membership_type', '')
+            
+            # Handle membership_type with "Other" option
+            membership_type = request.form.get('membership_type', '')
+            if membership_type == 'Other':
+                membership_type = request.form.get('membership_type_other', '')
+            card_user.membership_type = membership_type
             
             db.session.merge(card_user)
             db.session.commit()
