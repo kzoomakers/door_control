@@ -418,6 +418,17 @@
             });
         });
         
+        // Reset link states when page is restored from bfcache (browser back button)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                // Page was restored from bfcache, reset all link states
+                document.querySelectorAll('.controller-link, .action-button').forEach(link => {
+                    link.style.opacity = '';
+                    link.style.pointerEvents = '';
+                });
+            }
+        });
+        
         // Add search functionality
         let searchTimeout;
         function addSearchBox() {
