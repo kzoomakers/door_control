@@ -170,9 +170,20 @@
 
             <!-- Controller-Specific Card Configuration Sections -->
             {% for controller in controllers %}
-            <div class="controller-section">
-                <h3><i class="bi bi-credit-card"></i> Card Configuration (Controller-Specific)</h3>
+            <div class="controller-section {% if not controller.online %}opacity-50{% endif %}">
+                <h3>
+                    <i class="bi bi-credit-card"></i> Card Configuration (Controller-Specific)
+                    {% if not controller.online %}
+                        <span class="badge bg-danger ms-2"><i class="bi bi-exclamation-triangle"></i> Offline</span>
+                    {% endif %}
+                </h3>
                 <p class="text-muted mb-3">Controller: {{ controller.name }} ({{ controller.id }})</p>
+                {% if not controller.online %}
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>Warning:</strong> This controller appears to be offline. Changes may not be saved.
+                </div>
+                {% endif %}
                 
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
@@ -221,18 +232,22 @@
                     <div class="row g-3">
                         {% for door_num in range(1, controller.num_doors + 1) %}
                         <div class="col-md-3">
-                            <div class="door-permission-card {% if controller.card_data and controller.card_data.get('doors', {}).get(door_num|string, 1) == 0 %}allow{% else %}deny{% endif %}" 
+                            {% set current_permission = controller.card_data.get('doors', {}).get(door_num|string, 1) if controller.card_data else 1 %}
+                            <div class="door-permission-card {% if current_permission == 1 %}allow{% elif current_permission == 0 %}deny{% else %}allow{% endif %}"
                                  id="door_card_{{ controller.id }}_{{ door_num }}">
                                 <div class="door-permission-label">Door Relay {{ door_num }}</div>
-                                <select name="door_{{ controller.id }}_{{ door_num }}" 
-                                        class="form-select permission-select {% if controller.card_data and controller.card_data.get('doors', {}).get(door_num|string, 1) == 0 %}allow{% else %}deny{% endif %}"
+                                <select name="door_{{ controller.id }}_{{ door_num }}"
+                                        class="form-select permission-select {% if current_permission == 1 %}allow{% elif current_permission == 0 %}deny{% else %}allow{% endif %}"
                                         onchange="updateDoorCardStyle(this, '{{ controller.id }}', '{{ door_num }}')">
-                                    <option value="1" {% if not controller.card_data or controller.card_data.get('doors', {}).get(door_num|string, 1) == 1 %}selected{% endif %}>
-                                        <i class="bi bi-x-circle"></i> Deny
-                                    </option>
-                                    <option value="0" {% if controller.card_data and controller.card_data.get('doors', {}).get(door_num|string, 1) == 0 %}selected{% endif %}>
-                                        <i class="bi bi-check-circle"></i> Allow
-                                    </option>
+                                    <option value="1" {% if current_permission == 0 %}selected{% endif %}>🚫 Deny</option>
+                                    <option value="0" {% if current_permission == 1 %}selected{% endif %}>✅ Allow</option>
+                                    {% if controller.time_profiles %}
+                                        {% for profile in controller.time_profiles %}
+                                            <option value="{{ profile.id }}" {% if current_permission == profile.id %}selected{% endif %}>
+                                                ⏰ Profile {{ profile.id }} | {{ profile.weekdays }} | {{ profile.segments[0]['start'] }}-{{ profile.segments[0]['end'] }}
+                                            </option>
+                                        {% endfor %}
+                                    {% endif %}
                                 </select>
                             </div>
                         </div>
@@ -281,13 +296,18 @@
             card.classList.remove('allow', 'deny');
             selectElement.classList.remove('allow', 'deny');
             
-            // Add appropriate class
+            // Add appropriate class based on value
+            // value '0' = Allow, value '1' = Deny, other values = Time Profile
             if (value === '0') {
                 card.classList.add('allow');
                 selectElement.classList.add('allow');
-            } else {
+            } else if (value === '1') {
                 card.classList.add('deny');
                 selectElement.classList.add('deny');
+            } else {
+                // Time profile - use allow styling
+                card.classList.add('allow');
+                selectElement.classList.add('allow');
             }
         }
 

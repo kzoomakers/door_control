@@ -55,36 +55,36 @@ def globalcards():
         current_app.logger.debug("Using cached global cards data")
         # Still fetch fresh user metadata from database
         db_allcards = CardMemberMapping.query.all()
-        card_data = {card.card_number: (card.name, card.email, card.membership_type)
+        card_data = {card.card_number: (card.name, card.email, card.membership_type, card.note)
                      for card in db_allcards}
         
         # Merge cached controller data with fresh user data
         cards = []
+        deactivated_cards = []
+        
         for card_number in cached_global_data['all_cards_collapsed']:
             assigned_device_list = cached_global_data['assigned_devices'].get(card_number, [])
-            name, email, membership_type = card_data.get(card_number,
-                                                         ("Undefined", "Undefined", "Undefined"))
-            cards.append({
+            name, email, membership_type, note = card_data.get(card_number,
+                                                         ("Undefined", "Undefined", "Undefined", None))
+            
+            # Check if card is deactivated (all doors set to deny across all controllers)
+            is_deactivated = cached_global_data.get('deactivated_cards', {}).get(card_number, False)
+            
+            card_info = {
                 "card_number": card_number,
                 "name": name,
                 "email": email,
                 "membership_type": membership_type,
+                "note": note,
                 "assigned_devices": assigned_device_list
-            })
+            }
+            
+            if is_deactivated:
+                deactivated_cards.append(card_info)
+            else:
+                cards.append(card_info)
         
-        # Find orphan cards
-        orphan_cards = []
-        db_allcards = CardMemberMapping.query.filter(
-            not_(CardMemberMapping.card_number.in_(cached_global_data['all_cards_collapsed']))
-        )
-        for entry in db_allcards:
-            orphan_cards.append({
-                "card_number": entry.card_number,
-                "name": entry.name,
-                "note": entry.note,
-            })
-        
-        return render_template('globalcardusers.html', cards=cards, orphan_cards=orphan_cards)
+        return render_template('globalcardusers.html', cards=cards, deactivated_cards=deactivated_cards)
     
     # Cache miss - fetch fresh data from all controllers
     current_app.logger.debug("Cache miss - fetching fresh global cards data")
@@ -94,6 +94,8 @@ def globalcards():
     all_cards = []
     api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
     device = {}
+    deactivated_status = {}  # Track deactivated status for each card
+    
     for device_id, deviceproperty in api_config['devices'].items():
         # Try individual controller cache first
         controller_cards_key = f"controller_{device_id}_cards_list"
@@ -111,6 +113,29 @@ def globalcards():
         device[device_id] = deviceproperty
         device[device_id]['cards'] = thecardslist
         all_cards.append(thecardslist)
+        
+        # Check deactivation status for each card on this controller
+        for card_number in thecardslist:
+            card_detail_key = f"controller_{device_id}_card_{card_number}"
+            card_details = cache_manager.get(card_detail_key)
+            
+            if not card_details:
+                card_url = f"{current_app.config['REST_ENDPOINT']}/device/{device_id}/card/{card_number}"
+                card_response = requests.get(card_url)
+                if card_response.status_code == 200:
+                    card_details = card_response.json()['card']
+                    cache_manager.set(card_detail_key, card_details)
+            
+            # Check if deactivated on this controller
+            if card_details:
+                doors = card_details.get('doors', {})
+                # Check if all doors are set to 0 (deny) - API uses 0=deny, 1=allow
+                is_deactivated_on_controller = doors and all(value == 0 for value in doors.values())
+                
+                # Track deactivation status - card is only globally deactivated if deactivated on ALL controllers
+                if card_number not in deactivated_status:
+                    deactivated_status[card_number] = []
+                deactivated_status[card_number].append(is_deactivated_on_controller)
     
     all_cards_collapsed = []
     for sublist in all_cards:
@@ -129,59 +154,62 @@ def globalcards():
 
     current_app.logger.debug(f'assigned_devices={assigned_devices}')
     
+    # Determine which cards are globally deactivated (deactivated on ALL controllers)
+    globally_deactivated = {}
+    for card_number, statuses in deactivated_status.items():
+        # Card is globally deactivated only if it's deactivated on all controllers it's assigned to
+        globally_deactivated[card_number] = all(statuses) if statuses else False
+    
     # Cache the aggregated data
     global_cache_data = {
         'all_cards_collapsed': all_cards_collapsed,
-        'assigned_devices': assigned_devices
+        'assigned_devices': assigned_devices,
+        'deactivated_cards': globally_deactivated
     }
     cache_manager.set(cache_key, global_cache_data)
     
     # Continue with fresh user data from database
     db_allcards = CardMemberMapping.query.all()
-    card_data = {card.card_number: (card.name, card.email, card.membership_type) for card in db_allcards}
+    card_data = {card.card_number: (card.name, card.email, card.membership_type, card.note) for card in db_allcards}
     current_app.logger.debug(f'card_data={card_data}')
     # Combine REST and database data to display in the table
     # Use set() to get unique card numbers to prevent duplicates when a card is on multiple controllers
     cards = []
+    deactivated_cards = []
+    
     for card_number in set(all_cards_collapsed):
         assigned_device_list = assigned_devices.get(card_number, [])
-        name, email, membership_type = card_data.get(card_number, ("Undefined", "Undefined", "Undefined"))
-        cards.append({
+        name, email, membership_type, note = card_data.get(card_number, ("Undefined", "Undefined", "Undefined", None))
+        
+        card_info = {
             "card_number": card_number,
             "name": name,
             "email": email,
             "membership_type": membership_type,
+            "note": note,
             "assigned_devices": assigned_device_list
-        })
+        }
+        
+        # Check if globally deactivated
+        if globally_deactivated.get(card_number, False):
+            deactivated_cards.append(card_info)
+        else:
+            cards.append(card_info)
 
-
-    # find orphan card numbers
-    #db_allcards = CardMemberMapping.query.all()
-    orphan_cards = []
-    db_allcards = CardMemberMapping.query.filter(not_(CardMemberMapping.card_number.in_(all_cards_collapsed)))
-    card_data = {card.card_number: (card.card_number, card.name, card.note) for card in db_allcards}
-    for entry in db_allcards:
-        card_number, name, note = card_data.get(entry, ("Undefined", "Undefined", "Undefined"))
-        if card_number not in all_cards_collapsed:
-            orphan_cards.append({
-                "card_number": entry.card_number,
-                "name": entry.name,
-                "note": entry.note,
-            })
-
-    return render_template('globalcardusers.html', cards=cards, orphan_cards=orphan_cards)
+    return render_template('globalcardusers.html', cards=cards, deactivated_cards=deactivated_cards)
 
 
 @doorctl.route('/accesscontrol/api/controllers', methods=['GET'])
 def api_get_controllers():
-    """API endpoint to get list of controllers with device type info"""
+    """API endpoint to get list of controllers with device type info and time profiles"""
     try:
         api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
         controllers = []
+        offline_controllers = []
         
         # Check if devices exist in config
         if not api_config or 'devices' not in api_config:
-            return jsonify({'controllers': [], 'error': 'No devices configured'}), 200
+            return jsonify({'controllers': [], 'offline_controllers': [], 'error': 'No devices configured'}), 200
         
         for device_id, device_info in api_config['devices'].items():
             # Determine number of doors based on device type
@@ -196,16 +224,67 @@ def api_get_controllers():
             elif 'L04' in device_type:
                 num_doors = 4
             
-            controllers.append({
+            # Try to fetch time profiles for this controller with caching
+            time_profiles = []
+            controller_online = True
+            try:
+                # Check cache first (30 min TTL)
+                time_profile_key = f"controller_{device_id}_time_profiles"
+                cached_profiles = cache_manager.get(time_profile_key)
+                
+                if cached_profiles:
+                    current_app.logger.debug(f"Using cached time profiles for controller {device_id}")
+                    time_profiles = cached_profiles.get('profiles', [])
+                else:
+                    # Cache miss - fetch from API
+                    current_app.logger.debug(f"Cache miss - fetching time profiles for controller {device_id}")
+                    url = f"{current_app.config['REST_ENDPOINT']}/device/{device_id}/time-profiles"
+                    response = requests.get(url, timeout=3)
+                    if response.status_code == 200:
+                        time_profile_data = response.json()
+                        time_profiles = time_profile_data.get('profiles', [])
+                        # Cache the result
+                        cache_manager.set(time_profile_key, time_profile_data)
+                    else:
+                        controller_online = False
+                        current_app.logger.warning(f'Controller {device_id} returned status {response.status_code}')
+            except requests.exceptions.Timeout:
+                controller_online = False
+                current_app.logger.warning(f'Controller {device_id} ({device_info.get("name", device_id)}) timed out')
+            except requests.exceptions.ConnectionError:
+                controller_online = False
+                current_app.logger.warning(f'Controller {device_id} ({device_info.get("name", device_id)}) connection failed')
+            except Exception as e:
+                controller_online = False
+                current_app.logger.warning(f'Failed to fetch time profiles for controller {device_id}: {str(e)}')
+            
+            controller_data = {
                 'id': device_id,
                 'name': device_info.get('name', f'Controller {device_id}'),
                 'device_type': device_type,
-                'num_doors': num_doors
-            })
-        return jsonify({'controllers': controllers}), 200
+                'num_doors': num_doors,
+                'time_profiles': time_profiles,
+                'online': controller_online
+            }
+            
+            if controller_online:
+                controllers.append(controller_data)
+            else:
+                offline_controllers.append({
+                    'id': device_id,
+                    'name': device_info.get('name', f'Controller {device_id}')
+                })
+                # Still include offline controller but mark it
+                controller_data['offline'] = True
+                controllers.append(controller_data)
+        
+        return jsonify({
+            'controllers': controllers,
+            'offline_controllers': offline_controllers
+        }), 200
     except Exception as e:
         current_app.logger.error(f'Error in api_get_controllers: {str(e)}')
-        return jsonify({'controllers': [], 'error': str(e)}), 200
+        return jsonify({'controllers': [], 'offline_controllers': [], 'error': str(e)}), 200
 
 
 @doorctl.route('/accesscontrol/global/cards/add', methods=['POST'])
@@ -281,11 +360,14 @@ def global_add_card():
                 door_key = f'door_{controller_id}_{door_num}'
                 if door_key in request.form:
                     value = request.form.get(door_key)
-                    # Convert: form value '0' = Deny = API value 1, form value '1' = Allow = API value 0
-                    if value == '0':
-                        card_data['doors'][str(door_num)] = 1  # Deny
-                    elif value == '1':
-                        card_data['doors'][str(door_num)] = 0  # Allow
+                    # Value mapping: '1' = Deny (API 0), '0' = Allow (API 1), other = Time Profile ID
+                    if value == '1':
+                        card_data['doors'][str(door_num)] = 0  # Deny
+                    elif value == '0':
+                        card_data['doors'][str(door_num)] = 1  # Allow
+                    else:
+                        # Time profile ID - pass through as integer
+                        card_data['doors'][str(door_num)] = int(value)
                     door_num += 1
                 else:
                     break
@@ -373,44 +455,101 @@ def global_delete_card_from_controllers():
         return redirect(url_for('doorctl.globalcards'))
 
 
-@doorctl.route('/accesscontrol/global/cards/delete/<int:card_number>', methods=['GET', 'POST'])
-def globalcards_delete(card_number):
-    db.session.query(CardMemberMapping).filter(CardMemberMapping.card_number == card_number).delete()
-    db.session.commit()
-    return redirect(url_for('doorctl.globalcards'))
-
-
-@doorctl.route('/accesscontrol/global/cards/delete-all-abandoned', methods=['GET', 'POST'])
-def globalcards_delete_all_abandoned():
-    """Delete all abandoned cards (cards not assigned to any controller)"""
+@doorctl.route('/accesscontrol/global/cards/deactivate', methods=['POST'])
+def global_deactivate_card():
+    """Deactivate a card on all assigned controllers and optionally update note"""
     try:
-        # Get all cards from all controllers
-        api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
-        all_cards_collapsed = []
+        card_number = request.form.get('card_number')
+        reason = request.form.get('reason', '').strip()
+        selected_controllers = request.form.getlist('controllers')
         
-        for device_id, deviceproperty in api_config['devices'].items():
-            url = f"{current_app.config['REST_ENDPOINT']}/device/{device_id}/cards"
-            response = requests.get(url, headers=HEADERS)
-            if response.status_code == 200:
-                thecardslist = response.json().get("cards")
-                all_cards_collapsed.extend(thecardslist)
+        if not card_number or not selected_controllers:
+            flash('Invalid request', 'danger')
+            return redirect(url_for('doorctl.globalcards'))
         
-        # Find and delete orphan cards (cards not in any controller)
-        orphan_cards = CardMemberMapping.query.filter(not_(CardMemberMapping.card_number.in_(all_cards_collapsed)))
-        deleted_count = orphan_cards.count()
-        orphan_cards.delete(synchronize_session=False)
-        db.session.commit()
+        success_count = 0
+        failed_controllers = []
         
-        flash(f'Successfully deleted {deleted_count} abandoned card(s)', 'success')
+        for controller_info in selected_controllers:
+            # Extract controller ID from format "name (id)"
+            if '(' in controller_info:
+                controller_id = controller_info.split('(')[1].rstrip(')')
+            else:
+                controller_id = controller_info
+            
+            try:
+                # First, get the current card data
+                url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+                response = requests.get(url)
+                
+                if response.status_code == 200:
+                    card_data = response.json()['card']
+                    
+                    # Update the card with all relays set to deny (API uses 0=deny, 1=allow)
+                    # Set all door permissions to 0 (deny)
+                    card_data['doors'] = {
+                        '1': 0,  # Relay 1 - Deny
+                        '2': 0,  # Relay 2 - Deny
+                        '3': 0,  # Relay 3 - Deny
+                        '4': 0   # Relay 4 - Deny
+                    }
+                    
+                    # Send a PUT request to update the card
+                    url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
+                    response = requests.put(url, json=card_data)
+                    
+                    if response.status_code == 200:
+                        success_count += 1
+                        # Invalidate cache for this controller
+                        cache_manager.invalidate(f"controller_{controller_id}_card_{card_number}")
+                    else:
+                        failed_controllers.append(controller_id)
+                else:
+                    failed_controllers.append(controller_id)
+            except Exception as e:
+                failed_controllers.append(controller_id)
+                current_app.logger.error(f"Error deactivating card {card_number} on controller {controller_id}: {str(e)}")
+        
+        # Invalidate global cache if any cards were deactivated
+        if success_count > 0:
+            cache_manager.invalidate("global_cards_aggregated")
+            current_app.logger.info(f"Cache invalidated after deactivating card {card_number} on {success_count} controller(s)")
+        
+        # Update card note if reason was provided
+        if reason and success_count > 0:
+            try:
+                card_user = CardMemberMapping.query.filter_by(card_number=int(card_number)).one_or_none()
+                if card_user:
+                    # Get current timestamp
+                    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    deactivation_note = f"[DEACTIVATED {timestamp}] {reason}"
+                    
+                    # Append to existing note or create new note
+                    if card_user.note and card_user.note.strip():
+                        card_user.note = f"{card_user.note}\n{deactivation_note}"
+                    else:
+                        card_user.note = deactivation_note
+                    
+                    db.session.commit()
+                    current_app.logger.info(f"Updated note for card {card_number} with deactivation reason")
+            except Exception as e:
+                current_app.logger.error(f"Error updating note for card {card_number}: {str(e)}")
+                # Don't fail the whole operation if note update fails
+        
+        # Show results
+        if success_count > 0:
+            if reason:
+                flash(f'Card {card_number} deactivated on {success_count} controller(s) and note updated', 'success')
+            else:
+                flash(f'Card {card_number} deactivated on {success_count} controller(s)', 'success')
+        if failed_controllers:
+            flash(f'Failed to deactivate card on controller(s): {", ".join(failed_controllers)}', 'warning')
+        
+        return redirect(url_for('doorctl.globalcards'))
+        
     except Exception as e:
-        db.session.rollback()
-        flash(f'Error deleting abandoned cards: {str(e)}', 'danger')
-    
-    return redirect(url_for('doorctl.globalcards') + '#abandoned')
-
-
-
-
+        flash(f'Error deactivating card: {str(e)}', 'danger')
+        return redirect(url_for('doorctl.globalcards'))
 
 
 @doorctl.route('/accesscontrol/global/cards/edit/<int:card_id>', methods=['GET', 'POST'])
@@ -487,8 +626,14 @@ def globalcards_edit(card_id):
                     door_key = f'door_{controller_id}_{door_num}'
                     if door_key in request.form:
                         value = request.form.get(door_key)
-                        # Form value: '0' = Allow (API value 0), '1' = Deny (API value 1)
-                        card_data['doors'][str(door_num)] = int(value)
+                        # Value mapping: '1' = Deny (API 0), '0' = Allow (API 1), other = Time Profile ID
+                        if value == '1':
+                            card_data['doors'][str(door_num)] = 0  # Deny
+                        elif value == '0':
+                            card_data['doors'][str(door_num)] = 1  # Allow
+                        else:
+                            # Time profile ID - pass through as integer
+                            card_data['doors'][str(door_num)] = int(value)
                 
                 # Update card on this controller
                 url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_id}"
@@ -517,6 +662,7 @@ def globalcards_edit(card_id):
     # GET request - fetch controller data and card data from each controller
     api_config = parse_uhppoted_config('/etc/uhppoted/uhppoted.conf')
     controllers = []
+    offline_controllers = []
     
     for controller_id, controller_info in api_config['devices'].items():
         # Determine number of doors based on device type
@@ -531,23 +677,90 @@ def globalcards_edit(card_id):
         elif 'L04' in device_type:
             num_doors = 4
         
+        controller_online = True
+        card_fetch_succeeded = False
+        
         # Try to fetch existing card data from this controller
         card_data = None
         try:
             url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_id}"
-            response = requests.get(url)
+            response = requests.get(url, timeout=3)
+            current_app.logger.debug(f'Card fetch for controller {controller_id}: status={response.status_code}, url={url}')
             if response.status_code == 200:
                 card_data = response.json().get('card', {})
+                card_fetch_succeeded = True
+                current_app.logger.debug(f'Controller {controller_id} card fetch SUCCESS - marking as online')
+            elif response.status_code == 404:
+                # Card doesn't exist on this controller - that's okay, controller is still online
+                card_data = None
+                card_fetch_succeeded = True
+                current_app.logger.debug(f'Controller {controller_id} card not found (404) but controller is online')
+            elif response.status_code == 500:
+                # 500 error - log the error message but controller might still be online
+                try:
+                    error_msg = response.json().get('message', 'Unknown error')
+                    current_app.logger.warning(f'Controller {controller_id} returned 500 error for card {card_id}: {error_msg}')
+                except:
+                    current_app.logger.warning(f'Controller {controller_id} returned 500 error for card {card_id}: {response.text}')
+                # Treat 500 as controller being online but card not existing/having issues
+                card_data = None
+                card_fetch_succeeded = True
+            else:
+                controller_online = False
+                current_app.logger.warning(f'Controller {controller_id} card fetch returned status {response.status_code} - marking offline')
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            controller_online = False
+            current_app.logger.warning(f'Controller {controller_id} ({controller_info.get("name", controller_id)}) appears offline: {str(e)}')
         except Exception as e:
+            controller_online = False
             current_app.logger.warning(f'Failed to fetch card {card_id} from controller {controller_id}: {str(e)}')
+        
+        # Fetch time profiles for this controller with caching
+        time_profiles = []
+        try:
+            # Check cache first (30 min TTL)
+            time_profile_key = f"controller_{controller_id}_time_profiles"
+            cached_profiles = cache_manager.get(time_profile_key)
+            
+            if cached_profiles:
+                current_app.logger.debug(f"Using cached time profiles for controller {controller_id}")
+                time_profiles = cached_profiles.get('profiles', [])
+            else:
+                # Cache miss - fetch from API
+                current_app.logger.debug(f"Cache miss - fetching time profiles for controller {controller_id}")
+                time_profile_data = get_time_profiles(controller_id)
+                time_profiles = time_profile_data.get('profiles', []) if time_profile_data else []
+                if time_profile_data:
+                    cache_manager.set(time_profile_key, time_profile_data)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            # Only mark offline if we haven't already confirmed the controller is online via card fetch
+            if not card_fetch_succeeded:
+                controller_online = False
+            current_app.logger.warning(f'Controller {controller_id} ({controller_info.get("name", controller_id)}) timeout/connection error while fetching time profiles: {str(e)}')
+            time_profiles = []
+        except Exception as e:
+            # Don't mark offline for time profile errors if card fetch succeeded - controller is online, just time profiles failed
+            current_app.logger.warning(f'Failed to fetch time profiles from controller {controller_id}: {str(e)}')
+            time_profiles = []
+        
+        if not controller_online:
+            offline_controllers.append(controller_info.get('name', f'Controller {controller_id}'))
+        
+        current_app.logger.debug(f'Controller {controller_id} ({controller_info.get("name", controller_id)}) FINAL STATUS: online={controller_online}, card_fetch_succeeded={card_fetch_succeeded}, has_time_profiles={len(time_profiles) > 0}')
         
         controllers.append({
             'id': controller_id,
             'name': controller_info.get('name', f'Controller {controller_id}'),
             'device_type': device_type,
             'num_doors': num_doors,
-            'card_data': card_data
+            'card_data': card_data,
+            'time_profiles': time_profiles,
+            'online': controller_online
         })
+    
+    # Flash warning if any controllers are offline
+    if offline_controllers:
+        flash(f'Warning: The following controller(s) appear to be offline or lack card data: {", ".join(offline_controllers)}', 'warning')
     
     return render_template('globaleditcardusers.html', card=card, controllers=controllers)
 
@@ -1447,11 +1660,13 @@ def get_door_states(controller_id):
 def get_time_profiles(controller_id):
     # Make a GET request to retrieve the list of time profiles for the device
     url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/time-profiles"
-    response_timeprofile = requests.get(url)
+    response_timeprofile = requests.get(url, timeout=3)
 
     if response_timeprofile.status_code == 200:
         time_profiles_data = response_timeprofile.json()
-    return time_profiles_data
+        return time_profiles_data
+    else:
+        return None
 
 @doorctl.route('/accesscontrol/controller/<int:controller_id>/cards', methods=['GET'])
 @doorctl.route('/accesscontrol/controller/<int:controller_id>/card', methods=['GET'])
@@ -1804,6 +2019,8 @@ def delete_card_user(controller_id, card_number):
 @doorctl.route('/accesscontrol/controller/<int:controller_id>/deactivate_card', methods=['POST'])
 def deactivate_card(controller_id):
     card_number = request.form['card_number']
+    reason = request.form.get('reason', '').strip()
+    
     try:
         # First, get the current card data
         url = f"{current_app.config['REST_ENDPOINT']}/device/{controller_id}/card/{card_number}"
@@ -1830,7 +2047,32 @@ def deactivate_card(controller_id):
                 cache_manager.invalidate(f"controller_{controller_id}_card_{card_number}")
                 cache_manager.invalidate("global_cards_aggregated")
                 current_app.logger.info(f"Cache invalidated after deactivating card {card_number} on controller {controller_id}")
-                flash(f'Card {card_number} deactivated successfully (all relays set to DENY)', 'success')
+                
+                # Update card note if reason was provided
+                if reason:
+                    try:
+                        card_user = CardMemberMapping.query.filter_by(card_number=int(card_number)).one_or_none()
+                        if card_user:
+                            # Get current timestamp
+                            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            deactivation_note = f"[DEACTIVATED {timestamp}] {reason}"
+                            
+                            # Append to existing note or create new note
+                            if card_user.note and card_user.note.strip():
+                                card_user.note = f"{card_user.note}\n{deactivation_note}"
+                            else:
+                                card_user.note = deactivation_note
+                            
+                            db.session.commit()
+                            current_app.logger.info(f"Updated note for card {card_number} with deactivation reason")
+                            flash(f'Card {card_number} deactivated successfully and note updated', 'success')
+                        else:
+                            flash(f'Card {card_number} deactivated successfully (all relays set to DENY)', 'success')
+                    except Exception as e:
+                        current_app.logger.error(f"Error updating note for card {card_number}: {str(e)}")
+                        flash(f'Card {card_number} deactivated successfully, but failed to update note', 'warning')
+                else:
+                    flash(f'Card {card_number} deactivated successfully (all relays set to DENY)', 'success')
             else:
                 flash(f'Failed to deactivate card {card_number}', 'danger')
         else:

@@ -428,10 +428,10 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="unassociated-tab" data-bs-toggle="tab" data-bs-target="#unassociated"
-                        type="button" role="tab" aria-controls="unassociated" aria-selected="false">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Unassociated Cards
-                    <span class="info-badge">{{ orphan_cards|length if orphan_cards else 0 }}</span>
+                <button class="nav-link" id="deactivated-tab" data-bs-toggle="tab" data-bs-target="#deactivated"
+                        type="button" role="tab" aria-controls="deactivated" aria-selected="false">
+                    <i class="bi bi-person-x-fill"></i> Deactivated Users
+                    <span class="info-badge">{{ deactivated_cards|length if deactivated_cards else 0 }}</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -474,6 +474,12 @@
                                                class="btn btn-sm btn-primary">
                                                 <i class="bi bi-pencil"></i> Edit
                                             </a>
+                                            <button class="btn btn-sm btn-warning deactivate-card-btn"
+                                                    data-card-number="{{ card.card_number }}"
+                                                    data-card-name="{{ card.name }}"
+                                                    data-assigned-devices='{{ card.assigned_devices|tojson if card.assigned_devices else "[]" }}'>
+                                                <i class="bi bi-ban"></i> Deactivate
+                                            </button>
                                             <button class="btn btn-sm btn-danger delete-card-btn"
                                                     data-card-number="{{ card.card_number }}"
                                                     data-card-name="{{ card.name }}"
@@ -502,84 +508,78 @@
             </div>
             <!-- End Active Cards Tab -->
 
-            <!-- Unassociated Cards Tab -->
-            <div class="tab-pane fade" id="unassociated" role="tabpanel" aria-labelledby="unassociated-tab">
+            <!-- Deactivated Users Tab -->
+            <div class="tab-pane fade" id="deactivated" role="tabpanel" aria-labelledby="deactivated-tab">
                 <div class="alert alert-warning">
                     <i class="bi bi-exclamation-triangle-fill"></i>
                     <div>
-                        <strong>Warning:</strong> Cards with metadata that are no longer assigned to any door controller. 
-                        Deleting unassociated cards will affect controller log entries.
+                        <strong>Info:</strong> Cards that are deactivated (all door permissions set to DENY) across all controllers.
                     </div>
                 </div>
                 
                 <div class="table-container">
-                    {% if orphan_cards %}
+                    {% if deactivated_cards %}
                         <!-- Search Box -->
                         <div class="search-box">
                             <i class="bi bi-search"></i>
-                            <input type="text" id="unassociatedCardSearch" class="form-control" 
-                                   placeholder="Search by card number, name, or note...">
+                            <input type="text" id="deactivatedCardSearch" class="form-control"
+                                   placeholder="Search by card number or name...">
                         </div>
                         
-                        <!-- Unassociated Cards Table -->
-                        <div class="table-responsive">
-                            <table class="table" id="unassociatedCardsTable">
-                                <thead>
-                                    <tr>
-                                        <th><i class="bi bi-credit-card"></i> Card Number</th>
-                                        <th><i class="bi bi-person"></i> Name</th>
-                                        <th><i class="bi bi-sticky"></i> Note</th>
-                                        <th><i class="bi bi-gear"></i> Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for card in orphan_cards %}
-                                    <tr class="card-row" data-search="{{ card.card_number|lower }} {{ card.name|lower }} {{ card.note|lower }}">
-                                        <td>
-                                            <div class="card-number-cell">
-                                                <i class="bi bi-credit-card-2-front text-warning"></i>
-                                                {{ card.card_number }}
-                                            </div>
-                                        </td>
-                                        <td><strong>{{ card.name }}</strong></td>
-                                        <td>{{ card.note if card.note else '-' }}</td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <a href="{{ url_for('doorctl.globalcards_edit', card_id=card.card_number) }}"
-                                                   class="btn btn-sm btn-primary">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </a>
-                                                <button class="btn btn-sm btn-danger confirm-delete-btn"
-                                                        data-card-number="{{ card.card_number }}"
-                                                        data-card-name="{{ card.name }}">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        <!-- Deactivated Cards List -->
+                        <div id="deactivatedCardsList">
+                            {% for card in deactivated_cards %}
+                            <div class="card-item mb-3 card-row" data-search="{{ card.card_number|lower }} {{ card.name|lower }}">
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon me-3" style="background: #fff3cd; color: #dc3545;">
+                                        <i class="bi bi-credit-card-2-front"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="mb-1">
+                                            {{ card.card_number }}
+                                            <span class="badge bg-danger ms-2" style="font-size: 0.65rem; vertical-align: middle;">DEACTIVATED</span>
+                                        </h5>
+                                        <p class="mb-1"><strong>{{ card.name }}</strong></p>
+                                        <span class="badge bg-secondary">{{ card.membership_type }}</span>
+                                        {% if card.note and card.note != '' and card.note != 'None' and card.note|lower != 'undefined' %}
+                                        <div style="font-size: 0.8rem; color: #856404; background: #fff3cd; border-left: 3px solid #ffc107; padding: 0.25rem 0.5rem; margin-top: 0.5rem; border-radius: 4px;">
+                                            <i class="bi bi-sticky"></i> <strong>NOTE:</strong> {{ card.note }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end ms-3">
+                                        <div class="action-buttons justify-content-end mb-2">
+                                            <a href="{{ url_for('doorctl.globalcards_edit', card_id=card.card_number) }}"
+                                               class="btn btn-sm btn-primary">
+                                                <i class="bi bi-pencil"></i> Edit
+                                            </a>
+                                            <button class="btn btn-sm btn-danger delete-card-btn"
+                                                    data-card-number="{{ card.card_number }}"
+                                                    data-card-name="{{ card.name }}"
+                                                    data-assigned-devices='{{ card.assigned_devices|tojson if card.assigned_devices else "[]" }}'>
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                        {% if card.assigned_devices %}
+                                        <div class="text-muted" style="font-size: 0.875rem;">
+                                            <i class="bi bi-hdd"></i> {{ card.assigned_devices|length }} controller(s)
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
-                        
-                        <!-- Delete All Button -->
-                        {% if orphan_cards %}
-                        <div class="mt-3 text-end">
-                            <button id="confirmDeleteAllBtn" class="btn btn-danger btn-lg">
-                                <i class="bi bi-trash"></i> Delete All Unassociated Cards
-                            </button>
-                        </div>
-                        {% endif %}
                     {% else %}
                         <div class="empty-state">
                             <i class="bi bi-check-circle"></i>
-                            <h5>No Unassociated Cards</h5>
-                            <p>All cards with metadata are currently assigned to controllers</p>
+                            <h5>No Deactivated Cards</h5>
+                            <p>All cards are currently active</p>
                         </div>
                     {% endif %}
                 </div>
             </div>
-            <!-- End Unassociated Cards Tab -->
+            <!-- End Deactivated Users Tab -->
 
             <!-- Add Card Tab -->
             <div class="tab-pane fade" id="add-card" role="tabpanel" aria-labelledby="add-card-tab">
@@ -745,65 +745,40 @@
         </div>
     </div>
 
-    <!-- Delete Unassociated Card Modal -->
-    <div class="modal fade" id="deleteCardModal" tabindex="-1" aria-labelledby="deleteCardModalLabel" aria-hidden="true">
+    <!-- Deactivate Card Modal -->
+    <div class="modal fade" id="deactivateCardModal" tabindex="-1" aria-labelledby="deactivateCardModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="deleteCardModalLabel">
-                        <i class="bi bi-exclamation-triangle"></i> Confirm Card Deletion
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="deactivateCardModalLabel">
+                        <i class="bi bi-ban"></i> Deactivate Card
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete the metadata for this card?</p>
-                    <div class="alert alert-warning">
-                        <strong>Card Number:</strong> <span id="deleteCardNumber"></span><br>
-                        <strong>Name:</strong> <span id="deleteCardName"></span>
+                    <p>Are you sure you want to deactivate this card?</p>
+                    <div class="alert alert-info">
+                        <strong>Card Number:</strong> <span id="deactivateCardNumber"></span><br>
+                        <strong>Name:</strong> <span id="deactivateCardName"></span>
                     </div>
-                    <p class="text-danger">
-                        <strong>Warning:</strong> This action cannot be undone and will affect controller log entries!
-                    </p>
+                    <p class="text-muted">This will set all door permissions to DENY on all assigned controllers.</p>
+                    
+                    <div class="mb-3">
+                        <label for="deactivateReason" class="form-label">
+                            <i class="bi bi-sticky"></i> Reason (Optional)
+                        </label>
+                        <textarea class="form-control" id="deactivateReason" rows="3"
+                                  placeholder="Enter reason for deactivation (will be appended to card notes)"></textarea>
+                        <div class="form-text">This reason will be added to the card's notes with a timestamp.</div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x"></i> Cancel
                     </button>
-                    <a id="confirmDeleteBtn" href="#" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Delete Metadata
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete All Unassociated Cards Confirmation Modal -->
-    <div class="modal fade" id="deleteAllCardsModal" tabindex="-1" aria-labelledby="deleteAllCardsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="deleteAllCardsModalLabel">
-                        <i class="bi bi-exclamation-triangle"></i> Confirm Bulk Deletion
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Are you sure you want to delete ALL unassociated cards?</strong></p>
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <strong>Warning:</strong> This will permanently delete metadata for <strong>{{ orphan_cards|length if orphan_cards else 0 }}</strong> unassociated card(s).
-                    </div>
-                    <p class="text-danger">
-                        <strong>This action cannot be undone and will affect controller log entries!</strong>
-                    </p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x"></i> Cancel
+                    <button type="button" class="btn btn-warning" id="confirmDeactivateBtn">
+                        <i class="bi bi-ban"></i> Deactivate Card
                     </button>
-                    <a href="{{ url_for('doorctl.globalcards_delete_all_abandoned') }}" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Delete All Unassociated Cards
-                    </a>
                 </div>
             </div>
         </div>
@@ -841,19 +816,98 @@
             });
         });
         
-        // Search functionality for unassociated cards
-        document.getElementById('unassociatedCardSearch')?.addEventListener('input', function(e) {
+        // Search functionality for deactivated cards
+        document.getElementById('deactivatedCardSearch')?.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#unassociatedCardsTable .card-row');
+            const cards = document.querySelectorAll('#deactivatedCardsList .card-row');
             
-            rows.forEach(row => {
-                const searchData = row.dataset.search;
+            cards.forEach(card => {
+                const searchData = card.dataset.search;
                 if (searchData.includes(searchTerm)) {
-                    row.style.display = '';
+                    card.style.display = '';
                 } else {
-                    row.style.display = 'none';
+                    card.style.display = 'none';
                 }
             });
+        });
+
+        // Deactivate card with reason
+        let deactivateCardNumber = '';
+        let deactivateCardName = '';
+        let deactivateAssignedDevices = [];
+
+        function attachDeactivateListeners() {
+            document.querySelectorAll('.deactivate-card-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    deactivateCardNumber = this.dataset.cardNumber;
+                    deactivateCardName = this.dataset.cardName;
+                    
+                    // Safely parse assigned devices
+                    try {
+                        const devicesData = this.dataset.assignedDevices;
+                        if (devicesData && devicesData.trim() !== '') {
+                            deactivateAssignedDevices = JSON.parse(devicesData);
+                        } else {
+                            deactivateAssignedDevices = [];
+                        }
+                    } catch (e) {
+                        console.error('Error parsing assigned devices:', e);
+                        deactivateAssignedDevices = [];
+                    }
+                    
+                    console.log('Deactivate clicked:', deactivateCardNumber, deactivateAssignedDevices);
+                    
+                    document.getElementById('deactivateCardNumber').textContent = deactivateCardNumber;
+                    document.getElementById('deactivateCardName').textContent = deactivateCardName;
+                    document.getElementById('deactivateReason').value = '';
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('deactivateCardModal'));
+                    modal.show();
+                });
+            });
+        }
+
+        // Handle deactivate confirmation
+        document.getElementById('confirmDeactivateBtn')?.addEventListener('click', function() {
+            console.log('Confirm deactivate clicked:', deactivateCardNumber, deactivateAssignedDevices);
+            
+            if (deactivateCardNumber) {
+                const reason = document.getElementById('deactivateReason').value.trim();
+                
+                // Create form and submit
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("doorctl.global_deactivate_card") }}';
+                
+                const cardInput = document.createElement('input');
+                cardInput.type = 'hidden';
+                cardInput.name = 'card_number';
+                cardInput.value = deactivateCardNumber;
+                form.appendChild(cardInput);
+                
+                const reasonInput = document.createElement('input');
+                reasonInput.type = 'hidden';
+                reasonInput.name = 'reason';
+                reasonInput.value = reason;
+                form.appendChild(reasonInput);
+                
+                // Add controllers if available
+                if (deactivateAssignedDevices && deactivateAssignedDevices.length > 0) {
+                    deactivateAssignedDevices.forEach(controller => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'controllers';
+                        input.value = controller;
+                        form.appendChild(input);
+                    });
+                }
+                
+                console.log('Submitting form:', form);
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                console.error('No card number set for deactivation');
+            }
         });
 
         // Delete active card with controller selection
@@ -964,32 +1018,14 @@
             }
         });
         
-        // Delete confirmation for unassociated cards
-        document.querySelectorAll('.confirm-delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const cardNumber = this.dataset.cardNumber;
-                const cardName = this.dataset.cardName;
-                
-                document.getElementById('deleteCardNumber').textContent = cardNumber;
-                document.getElementById('deleteCardName').textContent = cardName;
-                document.getElementById('confirmDeleteBtn').href = '{{ url_for("doorctl.globalcards_delete", card_number=0) }}'.replace('/0', '/' + cardNumber);
-                
-                const modal = new bootstrap.Modal(document.getElementById('deleteCardModal'));
-                modal.show();
-            });
-        });
-        
-        // Delete all unassociated cards confirmation
-        document.getElementById('confirmDeleteAllBtn')?.addEventListener('click', function() {
-            const modal = new bootstrap.Modal(document.getElementById('deleteAllCardsModal'));
-            modal.show();
-        });
-        
         // Handle URL hash for direct tab linking
         window.addEventListener('DOMContentLoaded', () => {
+            // Attach deactivate listeners after DOM is loaded
+            attachDeactivateListeners();
+            
             const hash = window.location.hash;
-            if (hash === '#unassociated') {
-                const tab = new bootstrap.Tab(document.querySelector('[data-bs-target="#unassociated"]'));
+            if (hash === '#deactivated') {
+                const tab = new bootstrap.Tab(document.querySelector('[data-bs-target="#deactivated"]'));
                 tab.show();
             } else if (hash === '#add-card') {
                 const tab = new bootstrap.Tab(document.querySelector('[data-bs-target="#add-card"]'));
@@ -1004,8 +1040,8 @@
         document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
             tab.addEventListener('shown.bs.tab', (e) => {
                 const target = e.target.getAttribute('data-bs-target');
-                if (target === '#unassociated') {
-                    window.location.hash = 'unassociated';
+                if (target === '#deactivated') {
+                    window.location.hash = 'deactivated';
                 } else if (target === '#add-card') {
                     window.location.hash = 'add-card';
                 } else {
@@ -1023,8 +1059,28 @@
                 const container = document.getElementById('controllersList');
                 container.innerHTML = '';
                 
+                // Show warning if there are offline controllers
+                if (data.offline_controllers && data.offline_controllers.length > 0) {
+                    const offlineNames = data.offline_controllers.map(c => c.name).join(', ');
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'alert alert-warning mb-3';
+                    warningDiv.innerHTML = `
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Warning:</strong> The following controller(s) seem to be offline or lack specific card data: ${offlineNames}
+                    `;
+                    container.appendChild(warningDiv);
+                }
+                
                 if (data.controllers && data.controllers.length > 0) {
-                    data.controllers.forEach(controller => {
+                    // Filter out offline controllers
+                    const onlineControllers = data.controllers.filter(c => c.online !== false);
+                    
+                    if (onlineControllers.length === 0) {
+                        container.innerHTML += '<p class="text-danger">No online controllers available. Please check controller connectivity.</p>';
+                        return;
+                    }
+                    
+                    onlineControllers.forEach(controller => {
                         const card = document.createElement('div');
                         card.className = 'card mb-3';
                         card.style.border = '2px solid #dee2e6';
@@ -1032,12 +1088,26 @@
                         // Create door permission selects based on number of doors
                         let doorSelects = '';
                         for (let i = 1; i <= controller.num_doors; i++) {
+                            // Build time profile options
+                            let timeProfileOptions = '';
+                            if (controller.time_profiles && controller.time_profiles.length > 0) {
+                                controller.time_profiles.forEach(profile => {
+                                    const weekdays = profile.weekdays || '';
+                                    const startTime = profile.segments && profile.segments[0] ? profile.segments[0].start : '';
+                                    const endTime = profile.segments && profile.segments[0] ? profile.segments[0].end : '';
+                                    timeProfileOptions += `
+                                        <option value="${profile.id}">⏰ Profile ${profile.id} | ${weekdays} | ${startTime}-${endTime}</option>
+                                    `;
+                                });
+                            }
+                            
                             doorSelects += `
                                 <div class="col-md-${controller.num_doors === 1 ? '12' : controller.num_doors === 2 ? '6' : '4'} mb-2">
                                     <label class="form-label">Door Relay ${i}</label>
                                     <select class="form-select form-select-sm" name="door_${controller.id}_${i}">
-                                        <option value="0">Deny</option>
-                                        <option value="1" selected>Allow</option>
+                                        <option value="1">🚫 Deny</option>
+                                        <option value="0" selected>✅ Allow</option>
+                                        ${timeProfileOptions}
                                     </select>
                                 </div>
                             `;
