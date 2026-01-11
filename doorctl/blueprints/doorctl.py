@@ -17,6 +17,7 @@ from passlib.apache import HtpasswdFile
 from ..db import db, GlobalEventLog, CardMemberMapping, init_db
 import pytz
 import io
+import os
 
 HEADERS = {'accept': 'application/json'}
 
@@ -595,7 +596,13 @@ def generate_robots_txt():
 
 @doorctl.route('/', methods=['GET'])
 def index():
-    return 'It works!'
+    # Check if root_redirect is enabled in environment variables
+    root_redirect = os.environ.get('ROOT_REDIRECT', 'false').lower()
+    
+    if root_redirect == 'true':
+        return redirect('/accesscontrol/')
+    else:
+        return 'It works!'
 
 ### config editor ###
 @doorctl.route('/accesscontrol/configedit')
